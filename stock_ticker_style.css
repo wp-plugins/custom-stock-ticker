@@ -1,0 +1,40 @@
+.stock_ticker{
+	position:relative;
+	overflow:hidden;
+	border-radius:4px;
+}
+
+.stock_ticker_slider{
+	position:absolute;
+	background-color: transparent;
+}
+.stock_ticker_element{
+	position: absolute;
+	text-align:center;
+
+}
+
+.stock_ticker_entry{
+	position: absolute;
+
+}
+
+.stock_ticker_background {
+	border-radius:4px;
+	position:absolute;
+}
+
+ .stock_ticker_triangle{
+	position:absolute;
+	margin:0px;
+	width: 0px;
+	height: 0px;
+
+ }
+
+ .stock_ticker_vertical_line{
+ 	position:absolute;
+ 	background-color:#D7D7D7;
+ 	opacity:0.3;
+ 	width:2px;
+ }
