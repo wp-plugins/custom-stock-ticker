@@ -258,7 +258,7 @@ function stock_ticker_create_entry($stock_data, $text_color, $element_width, $el
 	//index 4 represents the change percent.
 	if($display_data[4]==1){
 		$data_item=$stock_data['change_percent'];
-
+		$data_item=str_replace('%','',$data_item);
 		if($data_item>0){
 			$data_item=round($data_item, 2);
 			$data_item="+".$data_item.'%';
