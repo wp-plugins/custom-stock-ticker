@@ -117,7 +117,7 @@ function stock_ticker_admin_init() {
 	wp_register_script('stock_ticker_admin_script',plugins_url('stock_ticker_admin_script.js', __FILE__) ,array( 'jquery' ),false, false);
 	wp_enqueue_script('stock_ticker_admin_script');
 }
-add_action('init', 'stock_ticker_admin_init');
+add_action('admin_init', 'stock_ticker_admin_init');
 
 
 add_action('admin_menu', 'stock_ticker_admin_actions');
@@ -400,7 +400,7 @@ function stock_ticker_update_category_stock_list(){
 
 function stock_ticker_create_max_display_field(){
 	?>
-		<label for="max_display">Number of stocks displayed at one time: </label>
+		<label for="max_display">Number of stocks displayed on the screen at one time: </label>
 		<input style="width:29px; font-size:14px; text-align:center" type="text" name="max_display" id="max_display" value="<?php echo get_option('stock_ticker_display_number'); ?>"/>
 		<label for="scroll_speed">Scroll speed (Pixels per second): </label>
 		<input style="width:36px; font-size:14px; text-align:center" type="text" name="scroll_speed" id="scroll_speed" value="<?php echo get_option('stock_ticker_scroll_speed'); ?>"/>
