@@ -3,8 +3,8 @@ Contributors: Relevad, WorkOnHoliday
 Donate link: http://svaca.com/
 Tags: stock ticker, stocks, ticker, stock market, stock price, share prices, market changes, trading, finance, financial
 Requires at least: 3.8.0
-Tested up to: 3.9.2
-Stable tag: trunk
+Tested up to: 4.0
+Stable tag: 1.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,7 +18,7 @@ Custom Stock Ticker plugin creates customizable moving stock tickers that can be
 Features:
 
  * Choice of stocks
- * Pre-built skins/themes
+ * 4 Pre-built skins/themes
  * Appearance customizations: width, height, background color, opacity, scroll speed, number of stocks displayed at one time, text color, font size, font family, and opacity
  * Ticker features: vertical lines, up/down triangles, different colors for up/down
  * CSS input for entire widget (allows for alignment, borders, margins, padding, etc.)
@@ -128,9 +128,17 @@ Email us at stock-ticker AT relevad DOT com or go to the support section of this
 
 == Changelog ==
 
+= 1.1 =
+
+* Code clean up and optimization
+* Fixed major bug with multiple tickers on the same page
+* Numerous minor bug fixes
+
 = 1.0 =
 Plugin released.
 
 == Upgrade Notice ==
 
-= No upgrades yet =
+= 1.0 =
+
+This version fixes numerous bugs reported by our community. Please upgrade for an enhanced experience.

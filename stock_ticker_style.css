@@ -1,40 +1,54 @@
+/* ticker -> slider -> entry -> element */
 .stock_ticker{
 	position:relative;
 	overflow:hidden;
 	border-radius:4px;
+	white-space: nowrap;
 }
 
 .stock_ticker_slider{
 	position:absolute;
 	background-color: transparent;
 }
-.stock_ticker_element{
-	position: absolute;
-	text-align:center;
-
-}
 
 .stock_ticker_entry{
-	position: absolute;
-
+        position: absolute;
 }
 
-.stock_ticker_background {
-	border-radius:4px;
-	position:absolute;
+.stock_ticker_element{
+	display: inline-block;
+	text-align: center;
 }
 
  .stock_ticker_triangle{
-	position:absolute;
 	margin:0px;
 	width: 0px;
 	height: 0px;
-
+	display: inline-block;
  }
 
  .stock_ticker_vertical_line{
- 	position:absolute;
+	position: relative;	
  	background-color:#D7D7D7;
  	opacity:0.3;
  	width:2px;
+	display: inline-block;
+	left: 5px;
  }
+
+.stock_ticker_triangle.gray {
+    display: none;
+}
+
+.stock_ticker .red {
+color: red;
+}
+.stock_ticker .green {
+color: green;
+}
+.stock_ticker .gray {
+color: gray;
+}
+
+
+
