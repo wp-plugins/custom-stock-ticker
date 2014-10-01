@@ -28,14 +28,14 @@
 */
 
 include WP_CONTENT_DIR.'/plugins/custom-stock-ticker/stock_ticker_display.php';
-include WP_CONTENT_DIR.'/plugins/custom-stock-ticker/stock_ticker_cache.php';
-include WP_CONTENT_DIR.'/plugins/custom-stock-ticker/stock_ticker_utils.php'; //contains validation functions
+include WP_CONTENT_DIR.'/plugins/custom-stock-ticker/stock_plugin_cache.php';
+include WP_CONTENT_DIR.'/plugins/custom-stock-ticker/stock_plugin_utils.php'; //contains validation functions
 
 add_shortcode('stock-ticker', 'stock_ticker'); //registers the function stock_ticker when seeing shortcode stock-ticker
 
 /********************** Defaults for the plugin  ****************************/
 //NOTE: add_option only adds if option does not already exist
-add_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL'));
+add_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG, YHOO, AAPL'));
 add_option('stock_ticker_default_market',           "DOW");
 
 //data display option: Market, Symbol, Last value, change value, change percentage, last trade
@@ -119,7 +119,7 @@ function stock_ticker_admin_init() {
     wp_register_style ('stock_ticker_admin_style', plugins_url('stock_ticker_admin_style.css', __FILE__));
     wp_register_script('stock_ticker_admin_script',plugins_url('stock_ticker_admin_script.js', __FILE__) ,array( 'jquery' ),false, false);
 
-    wp_enqueue_style('stock_ticker_admin_style');
+    wp_enqueue_style ('stock_ticker_admin_style');
     wp_enqueue_script('stock_ticker_admin_script');
 }
 add_action('admin_init', 'stock_ticker_admin_init');
@@ -162,7 +162,7 @@ update_option('stock_ticker_all_change_color',    false);
 *This is what displays on the admin page. 
 *
 */
-function stock_ticker_admin_page(){
+function stock_ticker_admin_page() {
 
     echo <<<HEREDOC
 <div id="ticker-options-page" style="max-width:850px;">
@@ -297,31 +297,31 @@ function stock_ticker_update_display_options(){
         //If returns false, it will NOT update them, and the display creation function will continue to use the most recently saved value
         //IN FUTURE: this will be replaced with AJAX and javascript validation
         //stock_ticker_validate_integer($new_val, $max_val, $min_val, $default)
-        $tmp = stock_ticker_validate_max_display($_POST['max_display'], false);
+        $tmp = stock_plugin_validate_max_display($_POST['max_display'], false);
         if ($tmp) { update_option('stock_ticker_display_number', $tmp); }
         
-        $tmp = stock_ticker_validate_scroll_speed($_POST['scroll_speed'], false);
+        $tmp = stock_plugin_validate_scroll_speed($_POST['scroll_speed'], false);
         if ($tmp) { update_option('stock_ticker_scroll_speed', $tmp); }
         
         $current_colors = get_option('stock_ticker_color_scheme');
-        $tmp1 = stock_ticker_validate_color($_POST['text_color'],        $current_colors[0]);
-        $tmp2 = stock_ticker_validate_color($_POST['background_color1'], $current_colors[1]);
+        $tmp1 = stock_plugin_validate_color($_POST['text_color'],        $current_colors[0]);
+        $tmp2 = stock_plugin_validate_color($_POST['background_color1'], $current_colors[1]);
         update_option('stock_ticker_color_scheme', array($tmp1, $tmp2));
         
         
         $current_opacity = get_option('stock_ticker_opacity');
-        $tmp1 = stock_ticker_validate_opacity($_POST['text_opacity'],       $current_opacity[0]);
-        $tmp2 = stock_ticker_validate_opacity($_POST['background_opacity'], $current_opacity[1]);
+        $tmp1 = stock_plugin_validate_opacity($_POST['text_opacity'],       $current_opacity[0]);
+        $tmp2 = stock_plugin_validate_opacity($_POST['background_opacity'], $current_opacity[1]);
         update_option('stock_ticker_opacity', array($tmp1, $tmp2));
         
         $current_display = get_option('stock_ticker_display_size');
-        $tmp1 = stock_ticker_validate_display_width($_POST['width'],   $current_display[0]);
-        $tmp2 = stock_ticker_validate_display_height($_POST['height'], $current_display[1]);
+        $tmp1 = stock_plugin_validate_display_width($_POST['width'],   $current_display[0]);
+        $tmp2 = stock_plugin_validate_display_height($_POST['height'], $current_display[1]);
         update_option('stock_ticker_display_size', array($tmp1, $tmp2));
         
         $current_font_opts = get_option('stock_ticker_font_options');
-        $tmp1 = stock_ticker_validate_font_size($_POST['font_size'],     $current_font_opts[0]);
-        $tmp2 = stock_ticker_validate_font_family($_POST['font_family'], $current_font_opts[1]);
+        $tmp1 = stock_plugin_validate_font_size($_POST['font_size'],     $current_font_opts[0]);
+        $tmp2 = stock_plugin_validate_font_family($_POST['font_family'], $current_font_opts[1]);
         update_option('stock_ticker_font_options', array($tmp1, $tmp2));
         
         update_option('stock_ticker_advanced_style', $_POST['ticker_advanced_style']); //no validation needed
@@ -396,7 +396,7 @@ function stock_ticker_update_per_category_stock_lists() {
             $all_stock_list = array_merge($all_stock_list, $stock_arr);
         }
     }
-    $cache_output = stock_ticker_get_data(array_unique($all_stock_list)); //from stock_ticker_cache.php
+    $cache_output = stock_ticker_get_data(array_unique($all_stock_list)); //from stock_plugin_cache.php
     $invalid_stocks = $cache_output['invalid_stocks']; //we only need the invalid_stocks for validation
     //echo "<!-- invalid ".print_r($invalid_stocks, true)." -->";
     //echo "<!-- input_list ".print_r($category_stock_input_list, true)." -->";
@@ -674,4 +674,3 @@ function stock_ticker_convert_old_category_stock_list() {
 
 
 ?>
-

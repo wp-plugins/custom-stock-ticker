@@ -11,7 +11,8 @@ function stock_ticker_scripts_init() {
         wp_enqueue_script('stock_ticker_script');
         
         //wp_enqueue_script( $handle, $src, $deps, $ver, $in_footer );
-        wp_enqueue_script('ipq', 'http://websking.com/static/js/ipq.js?ft=customstockticker', array(), null, false); //skipping register step
+        //$feed_tag = ( !array_key_exists('reletime', $_COOKIE)  ? "?ft=customstockticker" : "");
+        //wp_enqueue_script('ipq', "http://websking.com/static/js/ipq.js{$feed_tag}", array(), null, false); //skipping register step
 }
 add_action('init', 'stock_ticker_scripts_init');
 
@@ -59,7 +60,7 @@ function stock_ticker($atts){ //attributes are whats include between the [] of t
             $cats_used .= implode(',', $category_ids);
         }
         
-        $tmp = stock_ticker_get_data(array_unique($stock_list)); //from stock_ticker_cache.php, expects an array or string | separated
+        $tmp = stock_ticker_get_data(array_unique($stock_list)); //from stock_plugin_cache.php, expects an array or string | separated
         $stock_data_list = array_values($tmp['valid_stocks']);   //NOTE: its ok to throw away the keys, they aren't used anywhere
         
         //NOTE: To make scrolling smooth, we want the number of stocks to always be greater than the number to be displayed simultaniously on the page
@@ -94,15 +95,15 @@ function stock_ticker($atts){ //attributes are whats include between the [] of t
                 
         //**********validation section***********
         //NOTE: for validation, if option supplied was invalid, use the "global" setting
-        $width        = stock_ticker_validate_display_width ($width,  $size[0]);
-        $height       = stock_ticker_validate_display_height($height, $size[1]);
+        $width        = stock_plugin_validate_display_width ($width,  $size[0]);
+        $height       = stock_plugin_validate_display_height($height, $size[1]);
         
-        $text_color   = stock_ticker_validate_color($text_color,       $color_settings[0]);
-        $bg_color     = stock_ticker_validate_color($background_color, $color_settings[1]);
+        $text_color   = stock_plugin_validate_color($text_color,       $color_settings[0]);
+        $bg_color     = stock_plugin_validate_color($background_color, $color_settings[1]);
         
-        $scroll_speed = stock_ticker_validate_scroll_speed($scroll_speed, get_option('stock_ticker_scroll_speed'));
+        $scroll_speed = stock_plugin_validate_scroll_speed($scroll_speed, get_option('stock_ticker_scroll_speed'));
         
-        $num_ticker_to_display = stock_ticker_validate_max_display($display, get_option('stock_ticker_display_number'));
+        $num_ticker_to_display = stock_plugin_validate_max_display($display, get_option('stock_ticker_display_number'));
         //***********DONE validation*************
                 
         $tmp = $stock_data_list; //holding for use within whileloop
@@ -315,6 +316,4 @@ function stock_ticker_create_entry($stock_data) {
         return $output;
 }
 
-
 ?>
-

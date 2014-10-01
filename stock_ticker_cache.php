@@ -96,4 +96,3 @@ function stock_ticker_url_get_json($Url) {
 
 
 ?>
-
