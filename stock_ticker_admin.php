@@ -5,7 +5,7 @@
     Plugin URI: http://relevad.com/wp-plugins/
     Description: Create customizable moving stock tickers that can be placed anywhere on a site using shortcodes.
     Author: Relevad
-    Version: 1.1
+    Version: 1.1.1
     Author URI: http://relevad.com/
 
 */
@@ -288,10 +288,11 @@ function stock_ticker_update_display_options(){
         stock_ticker_update_default_settings_field($apply_template); //this is actually apply template
     }
     else { //all of these settings are handled by the template, therefore don't bother updating them if 
-    
-        update_option('stock_ticker_draw_vertical_lines', $_POST['create_vertical_dash']);
-        update_option('stock_ticker_draw_triangle',       $_POST['create_triangle']);
-        update_option('stock_ticker_enable_change_color', $_POST['enable_change_color']);
+   
+        //NOTE: these won't exist in the post if they are unchecked
+        update_option('stock_ticker_draw_vertical_lines', array_key_exists('create_vertical_dash', $_POST));
+        update_option('stock_ticker_draw_triangle',       array_key_exists('create_triangle',      $_POST));
+        update_option('stock_ticker_enable_change_color', array_key_exists('enable_change_color',  $_POST));
         
         //these will return either the cleaned up value, or a minimum, or maximum value, or the default (arg2)
         //If returns false, it will NOT update them, and the display creation function will continue to use the most recently saved value
@@ -380,7 +381,6 @@ function stock_ticker_update_per_category_stock_lists() {
 
     //Start with what is already in the database, so that we don't erase what is there in the case where categories get removed then added back in later
     $per_category_stock_lists  = get_option('stock_ticker_per_category_stock_lists', array()); //defaults to empty array
-    //echo "<!-- start ".print_r($per_category_stock_lists, true)." -->";
     $all_stock_list            = array();
     $category_stock_input_list = get_post_vars_for_category_stock_lists();
     
@@ -398,67 +398,12 @@ function stock_ticker_update_per_category_stock_lists() {
     }
     $cache_output = stock_ticker_get_data(array_unique($all_stock_list)); //from stock_plugin_cache.php
     $invalid_stocks = $cache_output['invalid_stocks']; //we only need the invalid_stocks for validation
-    //echo "<!-- invalid ".print_r($invalid_stocks, true)." -->";
-    //echo "<!-- input_list ".print_r($category_stock_input_list, true)." -->";
-    //if (!empty($invalid_stocks)) {
-        foreach ($category_stock_input_list as $key => $stock_list) {
-            //remove any invalid_stocks from the stock_list, then convert back to string for storage
-            $per_category_stock_lists[$key] = implode(',', array_diff($stock_list, $invalid_stocks)); //NOTE: we need to do this even if invalid stocks are empty
-        }
-        echo "<p style='font-size:14px;font-weight:bold;'>The following stocks were not found:" . implode(', ', $invalid_stocks) . "</p>";
-    //}
-    //echo "<!-- end ".print_r($per_category_stock_lists, true)." -->";
+    foreach ($category_stock_input_list as $key => $stock_list) {
+        //remove any invalid_stocks from the stock_list, then convert back to string for storage
+        $per_category_stock_lists[$key] = implode(',', array_diff($stock_list, $invalid_stocks)); //NOTE: we need to do this even if invalid stocks are empty
+    }
+    echo "<p style='font-size:14px;font-weight:bold;'>The following stocks were not found:" . implode(', ', $invalid_stocks) . "</p>";
     update_option('stock_ticker_per_category_stock_lists', $per_category_stock_lists); //shove the updated option back into database
-    
-    //works but with depricated notices
-    /*
-    $category_ids             = get_all_category_ids();
-    array_unshift ($category_ids, -1);  //used as a flag
-    
-    foreach ($category_ids as $id) {
-        if($id == -1){
-            $cat_id = 'Default';
-        }else{
-            $name = get_cat_name($id);
-            $cat_id = preg_replace('/\s+/', '', $name);
-            if($cat_id == 'Uncategorized'){
-                continue;
-            }
-        }
-        $input = strtoupper ($_POST[$cat_id."_stocks"]);
-        $input = preg_replace('/\s+/', '', $input);
-        $input_list = explode(',', $input);
-        if(empty($input_list)){
-            $per_category_stock_lists[$cat_id]=array();
-            continue;
-        }
-        $input_list = array_unique($input_list);
-        //runs the caching function on the given stocks list to see if any of the stocks were invalid.
-        $cache_output = stock_ticker_get_data($input_list);
-        $bad_stock_list = $cache_output['invalid_stocks'];
-        if(!empty($bad_stock_list)){
-            //get the difference of the two arrays, filter the empty values, and condense the array
-            $stock_list_difference = array_diff($input_list, $bad_stock_list);
-            $validated_stock_list = array_values($stock_list_difference);
-            $all_bad_stock_list = array_merge($bad_stock_list, $all_bad_stock_list);
-        }else{
-            $validated_stock_list = array_filter($input_list);
-        }
-        $per_category_stock_lists[$cat_id] = $validated_stock_list;
-
-    }
-    if(!empty($all_bad_stock_list)){
-        ?>
-            <p style='font-size:14px;font-weight:bold;'>
-                The following stocks were not found: 
-                <?php
-                    echo implode(', ', $all_bad_stock_list);
-                ?>.
-            </p>
-        <?php
-    }
-    update_option('stock_ticker_per_category_stock_lists', $per_category_stock_lists);    
-    */
 }
 
 function stock_ticker_create_max_display_field(){
@@ -521,7 +466,6 @@ function stock_ticker_create_font_field(){
         <datalist id="font_family"><!-- used as an "autocomplete dropdown" within the input text field -->
         <?php
             foreach($default_fonts as $font) {
-                //echo "<option value='{$font}' ".($font_options[1]==$font ? 'selected' : '')."></option>";
                 echo "<option value='{$font}'></option>";
             }
         ?>

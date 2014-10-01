@@ -4,7 +4,7 @@ Donate link: http://svaca.com/
 Tags: stock ticker, stocks, ticker, stock market, stock price, share prices, market changes, trading, finance, financial
 Requires at least: 3.8.0
 Tested up to: 4.0
-Stable tag: 1.1
+Stable tag: 1.1.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -128,6 +128,11 @@ Email us at stock-ticker AT relevad DOT com or go to the support section of this
 
 == Changelog ==
 
+= 1.1.1 =
+
+* Fixed issue with extra white space causing : "Warning: Cannot modify header information - headers already sent"
+* Fixed issue with saving checkbox settings
+
 = 1.1 =
 
 * Code clean up and optimization
@@ -139,6 +144,6 @@ Plugin released.
 
 == Upgrade Notice ==
 
-= 1.0 =
+= 1.1 =
 
-This version fixes numerous bugs reported by our community. Please upgrade for an enhanced experience.
+Minor bugfix patch

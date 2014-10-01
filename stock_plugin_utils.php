@@ -54,4 +54,3 @@ function stock_plugin_validate_opacity($new_val, $default) {
 }
 
 ?>
-
