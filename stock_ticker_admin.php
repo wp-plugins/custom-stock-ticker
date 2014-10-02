@@ -31,82 +31,85 @@ include WP_CONTENT_DIR.'/plugins/custom-stock-ticker/stock_ticker_display.php';
 include WP_CONTENT_DIR.'/plugins/custom-stock-ticker/stock_plugin_cache.php';
 include WP_CONTENT_DIR.'/plugins/custom-stock-ticker/stock_plugin_utils.php'; //contains validation functions
 
-add_shortcode('stock-ticker', 'stock_ticker'); //registers the function stock_ticker when seeing shortcode stock-ticker
 
-/********************** Defaults for the plugin  ****************************/
-//NOTE: add_option only adds if option does not already exist
-add_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG, YHOO, AAPL'));
-add_option('stock_ticker_default_market',           "DOW");
+function stock_ticker_activate() {
 
-//data display option: Market, Symbol, Last value, change value, change percentage, last trade
-add_option('stock_ticker_data_display',           array(0,1,1,1,1,0)); //NOTE: Hardcoded flags for which stock elements to display in a stock entry
-add_option('stock_ticker_display_option_strings', array("Market", "Symbol", "Last value", "Change value", "Change percentage", "Last trade")); //In Future may allow user config
+    /********************** Defaults for the plugin  ****************************/
+    //NOTE: add_option only adds if option does not already exist
+    add_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG, YHOO, AAPL'));
+    add_option('stock_ticker_default_market',           "DOW");
 
-add_option('stock_ticker_color_scheme',        array("#5DFC0A", "black")); //(Text, Background)
-add_option('stock_ticker_opacity',             array(1, 1));               //(Text_opacity, Background_opacity)
-add_option('stock_ticker_display_size',        array(400, 20));            //(width, height)
-add_option('stock_ticker_font_options',        array(12, "Arial"));        //(size, family)
-add_option('stock_ticker_default_fonts',       array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "Times")); //Example fonts to use in dropdown
-add_option('stock_ticker_scroll_speed',        60);
-add_option('stock_ticker_display_number',      2);              //default number of stocks to show within the ticker window at the same time (determines scaling)
-add_option('stock_ticker_advanced_style',      "margin:auto;"); //Advanced styling options (applies only to the root element of this stock ticker
-add_option('stock_ticker_draw_vertical_lines', true);
-add_option('stock_ticker_draw_triangle',       true);
-add_option('stock_ticker_enable_change_color', true);    //changes the color of the stock/triangle red/green for -/+
-add_option('stock_ticker_all_change_color',    false);   //Flag to allow the color change (above) to re-color all elements in a stock entry
+    //data display option: Market, Symbol, Last value, change value, change percentage, last trade
+    add_option('stock_ticker_data_display',             array(0,1,1,1,1,0)); //NOTE: Hardcoded flags for which stock elements to display in a stock entry
+    add_option('stock_ticker_display_option_strings',   array("Market", "Symbol", "Last value", "Change value", "Change percentage", "Last trade")); //In Future may allow user config
 
+    add_option('stock_ticker_color_scheme',             array("#5DFC0A", "black")); //(Text, Background)
+    add_option('stock_ticker_opacity',                  array(1, 1));               //(Text_opacity, Background_opacity)
+    add_option('stock_ticker_display_size',             array(400, 20));            //(width, height)
+    add_option('stock_ticker_font_options',             array(12, "Arial"));        //(size, family)
+    add_option('stock_ticker_default_fonts',            array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "Times")); //Example fonts to use in dropdown
+    add_option('stock_ticker_scroll_speed',             60);
+    add_option('stock_ticker_display_number',           2);              //default number of stocks to show within the ticker window at the same time (determines scaling)
+    add_option('stock_ticker_advanced_style',           "margin:auto;"); //Advanced styling options (applies only to the root element of this stock ticker
+    add_option('stock_ticker_draw_vertical_lines',      true);
+    add_option('stock_ticker_draw_triangle',            true);
+    add_option('stock_ticker_enable_change_color',      true);    //changes the color of the stock/triangle red/green for -/+
+    add_option('stock_ticker_all_change_color',         false);   //Flag to allow the color change (above) to re-color all elements in a stock entry
 
-add_option('stock_ticker_default_settings', array( //this is specifically for preset theme template configs
-    'Classic'=>array(
-        'name'              =>'Classic (black/white)', 
-        'font_family'       =>'Arial', 
-        'font_color'        =>'#FFFFFF',
-        'back_color'        =>'#000000',
-        'text_opacity'      =>1,
-        'background_opacity'=>1, 
-        'verti_lines'       =>true, 
-        'draw_triangle'     =>true, 
-        'change_color'      =>false,
-        'all_change'        =>false
-        ),
-    'CNN'=>array(
-        'name'              =>'CNN (black/green)', 
-        'font_family'       =>'Arial', 
-        'font_color'        =>'#99FF99', 
-        'back_color'        =>'#000000',
-        'text_opacity'      =>1,
-        'background_opacity'=>1, 
-        'verti_lines'       =>true, 
-        'draw_triangle'     =>false, 
-        'change_color'      =>false,
-        'all_change'        =>false
-        ),
-    'Market'=>array(
-        'name'              =>'Market (black/orange)', 
-        'font_family'       =>'sans-serif', 
-        'font_color'        =>'#FF6600', 
-        'back_color'        =>'#000066',
-        'text_opacity'      =>1,
-        'background_opacity'=>1, 
-        'verti_lines'       =>true, 
-        'draw_triangle'     =>true, 
-        'change_color'      =>false, 
-        'all_change'        =>false
-        ),
-    'CNBC'=>array(
-        'name'              =>'CNBC (white/green)', 
-        'font_family'       =>'Arial', 
-        'font_color'        =>'#33CC33', 
-        'back_color'        =>'#FFFFFF',
-        'text_opacity'      =>1,
-        'background_opacity'=>1, 
-        'verti_lines'       =>false, 
-        'draw_triangle'     =>true, 
-        'change_color'      =>true,
-        'all_change'        =>true
-        ),
-    )
-); //end add_option
+    add_option('stock_ticker_default_settings', array( //this is specifically for preset theme template configs
+        'Classic'=>array(
+            'name'              =>'Classic (black/white)', 
+            'font_family'       =>'Arial', 
+            'font_color'        =>'#FFFFFF',
+            'back_color'        =>'#000000',
+            'text_opacity'      =>1,
+            'background_opacity'=>1, 
+            'verti_lines'       =>true, 
+            'draw_triangle'     =>true, 
+            'change_color'      =>false,
+            'all_change'        =>false
+            ),
+        'CNN'=>array(
+            'name'              =>'CNN (black/green)', 
+            'font_family'       =>'Arial', 
+            'font_color'        =>'#99FF99', 
+            'back_color'        =>'#000000',
+            'text_opacity'      =>1,
+            'background_opacity'=>1, 
+            'verti_lines'       =>true, 
+            'draw_triangle'     =>false, 
+            'change_color'      =>false,
+            'all_change'        =>false
+            ),
+        'Market'=>array(
+            'name'              =>'Market (black/orange)', 
+            'font_family'       =>'sans-serif', 
+            'font_color'        =>'#FF6600', 
+            'back_color'        =>'#000066',
+            'text_opacity'      =>1,
+            'background_opacity'=>1, 
+            'verti_lines'       =>true, 
+            'draw_triangle'     =>true, 
+            'change_color'      =>false, 
+            'all_change'        =>false
+            ),
+        'CNBC'=>array(
+            'name'              =>'CNBC (white/green)', 
+            'font_family'       =>'Arial', 
+            'font_color'        =>'#33CC33', 
+            'back_color'        =>'#FFFFFF',
+            'text_opacity'      =>1,
+            'background_opacity'=>1, 
+            'verti_lines'       =>false, 
+            'draw_triangle'     =>true, 
+            'change_color'      =>true,
+            'all_change'        =>true
+            ),
+        )
+    ); //end add_option
+}
+
+register_activation_hook( __FILE__, 'stock_ticker_activate' );
 
 
 //*********cleanup and conversion functions for updating versions *********
@@ -115,47 +118,50 @@ if (get_option('stock_ticker_category_stock_list')) { //this old option exists
 }
 //*************************************************************************
 
-function stock_ticker_admin_init() {
+function stock_ticker_admin_enqueue($hook) {
+    if ($hook != 'settings_page_stock_ticker_admin') {return;} //do not run on other admin pages
+    
     wp_register_style ('stock_ticker_admin_style', plugins_url('stock_ticker_admin_style.css', __FILE__));
-    wp_register_script('stock_ticker_admin_script',plugins_url('stock_ticker_admin_script.js', __FILE__) ,array( 'jquery' ),false, false);
+    wp_register_script('stock_ticker_admin_script',plugins_url('stock_ticker_admin_script.js', __FILE__) , array( 'jquery' ), false, false);
 
     wp_enqueue_style ('stock_ticker_admin_style');
     wp_enqueue_script('stock_ticker_admin_script');
+    
+    stock_ticker_scripts_enqueue(true); //we also need these scripts
 }
-add_action('admin_init', 'stock_ticker_admin_init');
+add_action('admin_enqueue_scripts', 'stock_ticker_admin_enqueue');
 
 
-add_action('admin_menu', 'stock_ticker_admin_actions');
 
 function stock_ticker_admin_actions(){
-
-    add_options_page('StockTicker', 'StockTicker', 'manage_options', __FILE__, 'stock_ticker_admin_page');
-
+    $hook = add_options_page('StockTicker', 'StockTicker', 'manage_options', 'stock_ticker_admin', 'stock_ticker_admin_page'); //wrapper for add_submenu_page specifically into "settings"
+    //add_submenu_page( 'options-general.php', $page_title, $menu_title, $capability, $menu_slug, $function ); // do not use __FILE__ for menu_slug
 }
+add_action('admin_menu', 'stock_ticker_admin_actions');
+
 
 // This function is to reset all options inserted into wordpress DB by stock ticker to their default first run initialization values
 function stock_ticker_reset_options() {
 
-update_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL'));
-update_option('stock_ticker_default_market',           "DOW");
+   update_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL'));
+   update_option('stock_ticker_default_market',           "DOW");
 
-//data display option: Market, Symbol, Last value, change value, change percentage, last trade
-update_option('stock_ticker_data_display',           array(0,1,1,1,1,0));
-update_option('stock_ticker_display_option_strings', array("Market", "Symbol", "Last value", "Change value", "Change percentage", "Last trade"));
+   //data display option: Market, Symbol, Last value, change value, change percentage, last trade
+   update_option('stock_ticker_data_display',           array(0,1,1,1,1,0));
+   update_option('stock_ticker_display_option_strings', array("Market", "Symbol", "Last value", "Change value", "Change percentage", "Last trade"));
 
-update_option('stock_ticker_color_scheme',        array("#5DFC0A", "black"));
-update_option('stock_ticker_opacity',             array(1, 1));
-update_option('stock_ticker_display_size',        array(400, 20));
-update_option('stock_ticker_font_options',        array(12, "Arial"));
-update_option('stock_ticker_default_fonts',       array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "serif", "Times"));
-update_option('stock_ticker_scroll_speed',        60);
-update_option('stock_ticker_display_number',      2);
-update_option('stock_ticker_advanced_style',      "margin:auto;");
-update_option('stock_ticker_draw_vertical_lines', true);
-update_option('stock_ticker_draw_triangle',       true);
-update_option('stock_ticker_enable_change_color', true);
-update_option('stock_ticker_all_change_color',    false);
-
+   update_option('stock_ticker_color_scheme',        array("#5DFC0A", "black"));
+   update_option('stock_ticker_opacity',             array(1, 1));
+   update_option('stock_ticker_display_size',        array(400, 20));
+   update_option('stock_ticker_font_options',        array(12, "Arial"));
+   update_option('stock_ticker_default_fonts',       array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "serif", "Times"));
+   update_option('stock_ticker_scroll_speed',        60);
+   update_option('stock_ticker_display_number',      2);
+   update_option('stock_ticker_advanced_style',      "margin:auto;");
+   update_option('stock_ticker_draw_vertical_lines', true);
+   update_option('stock_ticker_draw_triangle',       true);
+   update_option('stock_ticker_enable_change_color', true);
+   update_option('stock_ticker_all_change_color',    false);
 }
 
 /*

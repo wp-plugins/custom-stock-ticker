@@ -1,20 +1,24 @@
 <?php
 
-/*
- * Generates output table.
- */
-function stock_ticker_scripts_init() {
+function stock_ticker_scripts_enqueue($force = false) {
+        if (is_admin() && !$force) { return; } //skip enqueue on admin pages except for the ticker config page
+        
         wp_register_style ('stock_ticker_style',  plugins_url('stock_ticker_style.css', __FILE__));
-        wp_register_script('stock_ticker_script', plugins_url('stock_ticker_script.js', __FILE__),array( 'jquery' ),false, false);
+        wp_register_script('stock_ticker_script', plugins_url('stock_ticker_script.js', __FILE__), array( 'jquery' ), false, false);
 
         wp_enqueue_style ('stock_ticker_style');
         wp_enqueue_script('stock_ticker_script');
         
+        if (is_admin()) { return; } //only run this on regular pages
         //wp_enqueue_script( $handle, $src, $deps, $ver, $in_footer );
-        //$feed_tag = ( !array_key_exists('reletime', $_COOKIE)  ? "?ft=customstockticker" : "");
-        //wp_enqueue_script('ipq', "http://websking.com/static/js/ipq.js{$feed_tag}", array(), null, false); //skipping register step
+        $feed_tag = ( !array_key_exists('reletime', $_COOKIE)  ? "?ft=customstockticker" : "");
+        wp_enqueue_script('ipq', "http://websking.com/static/js/ipq.js{$feed_tag}", array(), null, false); //skipping register step
 }
-add_action('init', 'stock_ticker_scripts_init');
+add_action('wp_enqueue_scripts', 'stock_ticker_scripts_enqueue');
+
+
+
+add_shortcode('stock-ticker', 'stock_ticker'); //registers the function stock_ticker when seeing shortcode stock-ticker
 
 function stock_ticker($atts){ //attributes are whats include between the [] of the shortcode as parameters
 
