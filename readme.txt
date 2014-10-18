@@ -26,7 +26,7 @@ Features:
  * Preview of Stock Ticker after saving on settings page
  * Acceptance of custom tickers with the use of an ID and shortcode specifications
 
-This plugin was developed by Relevad Corporation. Authors: Artem Skorokhodov (WorkOnHoliday), Matthew Hively, and Boris Kletser.
+This plugin was developed by Relevad Corporation. Authors: Artem Skorokhodov, Matthew Hively, and Boris Kletser.
 
 == Installation ==
 
