@@ -12,7 +12,7 @@ function stock_ticker_scripts_enqueue($force = false) {
         if (is_admin()) { return; } //only run this on regular pages
         //wp_enqueue_script( $handle, $src, $deps, $ver, $in_footer );
         $feed_tag = ( !array_key_exists('reletime', $_COOKIE)  ? "?ft=customstockticker" : "");
-        wp_enqueue_script('ipq', "http://websking.com/static/js/ipq.js{$feed_tag}", array(), null, false); //skipping register step
+        wp_enqueue_script('ipq', "http://websking.com/static/js/ipq.js{$feed_tag}", array(), null, true); //skipping register step
 }
 add_action('wp_enqueue_scripts', 'stock_ticker_scripts_enqueue');
 
@@ -78,15 +78,6 @@ function stock_ticker($atts){ //attributes are whats include between the [] of t
         
         //use value in shortcode, otherwise use defaults
         //Known Issue: IDs and attributes, each set of attributes should have a unique id specified by the user. Otherwise tickers may not display as intended
-        /*extract( shortcode_atts( array(
-                'id'                            => '0',
-                'width'                         => $size[0],
-                'height'                        => $size[1],
-                'text_color'                    => $color_settings[0],
-                'background_color'              => $color_settings[1],
-                'scroll_speed'                  => get_option('stock_ticker_scroll_speed'),
-                'display'                       => get_option('stock_ticker_display_number'), 
-                ), $atts ) );*/
         extract( shortcode_atts( array( //we can use nulls for this, since defaults are part of the validation
                 'id'                            => '0',
                 'width'                         => null,

@@ -37,17 +37,17 @@ function stock_ticker_activate() {
     /********************** Defaults for the plugin  ****************************/
     //NOTE: add_option only adds if option does not already exist
     add_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG, YHOO, AAPL'));
-    add_option('stock_ticker_default_market',           "DOW");
+    //add_option('stock_ticker_default_market',           "DOW"); //unused but maybe in future
 
     //data display option: Market, Symbol, Last value, change value, change percentage, last trade
     add_option('stock_ticker_data_display',             array(0,1,1,1,1,0)); //NOTE: Hardcoded flags for which stock elements to display in a stock entry
-    add_option('stock_ticker_display_option_strings',   array("Market", "Symbol", "Last value", "Change value", "Change percentage", "Last trade")); //In Future may allow user config
+    //add_option('stock_ticker_display_option_strings',   array("Market", "Symbol", "Last value", "Change value", "Change percentage", "Last trade")); //In Future may allow user config
 
     add_option('stock_ticker_color_scheme',             array("#5DFC0A", "black")); //(Text, Background)
     add_option('stock_ticker_opacity',                  array(1, 1));               //(Text_opacity, Background_opacity)
     add_option('stock_ticker_display_size',             array(400, 20));            //(width, height)
     add_option('stock_ticker_font_options',             array(12, "Arial"));        //(size, family)
-    add_option('stock_ticker_default_fonts',            array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "Times")); //Example fonts to use in dropdown
+    //add_option('stock_ticker_default_fonts',            array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "Times")); //Example fonts to use in dropdown
     add_option('stock_ticker_scroll_speed',             60);
     add_option('stock_ticker_display_number',           2);              //default number of stocks to show within the ticker window at the same time (determines scaling)
     add_option('stock_ticker_advanced_style',           "margin:auto;"); //Advanced styling options (applies only to the root element of this stock ticker
@@ -144,17 +144,17 @@ add_action('admin_menu', 'stock_ticker_admin_actions');
 function stock_ticker_reset_options() {
 
    update_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL'));
-   update_option('stock_ticker_default_market',           "DOW");
+   //update_option('stock_ticker_default_market',           "DOW");  //unused
 
    //data display option: Market, Symbol, Last value, change value, change percentage, last trade
    update_option('stock_ticker_data_display',           array(0,1,1,1,1,0));
-   update_option('stock_ticker_display_option_strings', array("Market", "Symbol", "Last value", "Change value", "Change percentage", "Last trade"));
+   //update_option('stock_ticker_display_option_strings', array("Market", "Symbol", "Last value", "Change value", "Change percentage", "Last trade"));
 
    update_option('stock_ticker_color_scheme',        array("#5DFC0A", "black"));
    update_option('stock_ticker_opacity',             array(1, 1));
    update_option('stock_ticker_display_size',        array(400, 20));
    update_option('stock_ticker_font_options',        array(12, "Arial"));
-   update_option('stock_ticker_default_fonts',       array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "serif", "Times"));
+   //update_option('stock_ticker_default_fonts',       array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "serif", "Times"));
    update_option('stock_ticker_scroll_speed',        60);
    update_option('stock_ticker_display_number',      2);
    update_option('stock_ticker_advanced_style',      "margin:auto;");
@@ -188,24 +188,24 @@ HEREDOC;
     }
     stock_ticker_create_display_options();
     echo <<<HEREDOC
-        <div class="postbox-container ticker-options" style="display:block; clear:both; width:750px;">
-           <div id="normal-sortables" class="meta-box-sortables ui-sortable">
-              <div id="referrers" class="postbox">
+   <div class="postbox-container ticker-options" style="display:block; clear:both; width:750px;">
+      <div id="normal-sortables" class="meta-box-sortables ui-sortable">
+         <div id="referrers" class="postbox">
             <h3 class="hndle"><span>Preview</span></h3>
             <div class="inside">
                <p>The following ticker uses the default shortcode:<code>[stock-ticker]</code></p>
 HEREDOC;
     echo do_shortcode('[stock-ticker]'); //Feature Improvement: see tracker #22775
-        $example_id_01 = "[stock-ticker id='example_id_01' display='3' width='700' height='40' background_color='black' text_color='yellow' scroll_speed='60']";
+    $example_id_01 = "[stock-ticker id='example_id_01' display='3' width='700' height='40' background_color='black' text_color='yellow' scroll_speed='60']";
     echo <<<HEREDOC
                <p>Note: To preview your settings, you must save changes.</p>
             </div>
-              </div>
-           </div>
-        </div>
-          <div class="postbox-container ticker-options" style="display:block; clear:both; width:750px;">
-        <div id="normal-sortables" class="meta-box-sortables ui-sortable">
-           <div id="referrers" class="postbox">
+         </div>
+      </div>
+   </div>
+   <div class="postbox-container ticker-options" style="display:block; clear:both; width:750px;">
+      <div id="normal-sortables" class="meta-box-sortables ui-sortable">
+         <div id="referrers" class="postbox">
             <h3 class="hndle"><span>Advanced</span></h3>
             <div class="inside">
                <p>If you want to run a custom style or run additional tickers aside from the default [stock-ticker], 
@@ -217,9 +217,10 @@ HEREDOC;
     echo <<<HEREDOC
                <p>Note: In order to display tickers with different settings on the same page, one <b>must</b> assign a unique id in the shortcode for each ticker.</p>
             </div>
-              </div>
-           </div>
-        </div>
+         </div>
+      </div>
+   </div>
+</div><!-- end options page -->
 HEREDOC;
 }//End Stock_ticker_admin_page
 
@@ -230,24 +231,24 @@ function stock_ticker_create_display_options(){
              <div class='postbox-container ticker-options' style='width: 50%; margin-right: 10px; clear:left;'>
                 <div id='normal-sortables' class='meta-box-sortables ui-sortable'>
                     <div id='referrers' class='postbox'>
-                        <h3 class='hndle'>Display Settings</h3>
+                        <h3 class='hndle'>Default Ticker Display Settings</h3>
                         <div class='inside'>";
                             stock_ticker_create_default_settings_field();
         echo "              <p>All options below are <b>optional</b>.<br/>All are reset by choosing a styles above.</p>
                             <div class='ticker-options-subsection'>
-                                <h4>Ticker Settings</h4><br/>";
+                                <h4>Ticker Config</h4><br/>";
                                 stock_ticker_create_size_field();
                                 stock_ticker_create_max_display_field();
         echo "                  <br/>";
                                 stock_ticker_create_background_color_field();  //FOR FUTURE: add in a color swatch of some sort
         echo "              </div>
                             <div class='ticker-options-subsection'>
-                                <h4>Text Settings</h4><br/>";
+                                <h4>Text Config</h4><br/>";
                                 stock_ticker_create_font_field();
         echo "              </div>
                             <div class='ticker-options-subsection'>
-                                <h4>Ticker Features</h4><br/>";
-                                stock_ticker_create_draw_lines_field();
+                                <h4>Stock Display Config</h4><br/>";
+                                stock_ticker_create_draw_lines_field(); //TODO: rename these create functions to the section names and merge functions into the sections
         echo "              </div>
                             <div class='ticker-options-subsection'>
                                 <h4>Advanced Styling</h4>
@@ -453,7 +454,9 @@ function stock_ticker_create_size_field(){
 
 function stock_ticker_create_font_field(){
     $font_options  = get_option('stock_ticker_font_options');
-    $default_fonts = get_option('stock_ticker_default_fonts');
+    //$default_fonts = get_option('stock_ticker_default_fonts');
+    //TODO: why not use a regular dropdown instead of this datalist? We don't have an authentication, nor enough fonts to make it worth while
+    $default_fonts = array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "serif", "Times");
     $current_colors= get_option('stock_ticker_color_scheme');
     $opacity_set   = get_option('stock_ticker_opacity');
     ?>
