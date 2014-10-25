@@ -53,10 +53,10 @@ h3.hndle {
     width:100%;
 }
 
-.ticker-options-subsection .ticker-options-display{
+.ticker-options-subsection .section-options-display{
     margin-bottom:1px;
 } 
-.ticker-options-subsection .ticker_admin_toggle{
+.ticker-options-subsection .section_toggle{
     cursor:pointer;
     text-align: center;
     margin-bottom: 0px;

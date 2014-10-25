@@ -22,100 +22,104 @@ add_shortcode('stock-ticker', 'stock_ticker'); //registers the function stock_ti
 
 function stock_ticker($atts){ //attributes are whats include between the [] of the shortcode as parameters
 
-        $output = "";
-        //NOTE: skipping attributes, because first priority is to get the stock list, if that doesn't exist, nothing else matters.
-        $per_category_stock_lists = get_option('stock_ticker_per_category_stock_lists', array()); //default just in case its missing for some reason
-        if (empty($per_category_stock_lists)) {
-            return "<!-- WARNING: no stock list found in wp_options, check settings, or reinstall plugin -->";
-        }
+    $output = "";
+    //NOTE: skipping attributes, because first priority is to get the stock list, if that doesn't exist, nothing else matters.
+    $per_category_stock_lists = get_option('stock_ticker_per_category_stock_lists', array()); //default just in case its missing for some reason
+    if (empty($per_category_stock_lists)) {
+        return "<!-- WARNING: no stock list found in wp_options, check settings, or reinstall plugin -->";
+    }
 
-        $category_ids = array(); //effectively for use on homepage only
+    //FIND the categories of the current page
+    $category_ids = array(); //effectively for use on homepage & admin pages only
+    if (!is_admin() && !is_home()) {
         if (is_category()) { 
             $tmp = get_queried_object(); //gets the WP_query object for this page
             $category_ids[] = $tmp->term_id;
         }
-        elseif (!is_home()) {
+        else {
             $tmp = get_the_category(); //get the list of all category objects for this post
             foreach ($tmp as $cat) {
                 $category_ids[] = $cat->term_id;
             }
         }
-        //NOTE: $cat = get_query_var('cat');  DOES NOT WORK!
-        
-        $stock_list = array();
-        $default_stock_list = explode(',', $per_category_stock_lists['default']);  //REM: returns a string
-        
-        if (empty($category_ids)) {
+    }
+    //NOTE: $cat = get_query_var('cat');  DOES NOT WORK!
+    
+    $stock_list = array();
+    $default_stock_list = explode(',', $per_category_stock_lists['default']);  //REM: returns a string
+    
+    if (empty($category_ids)) {
+        $stock_list = $default_stock_list;
+        $cats_used = 'default';
+    }
+    else {
+        $cats_used = '';
+        foreach ($category_ids as $cat) { //merge multiple stock lists together if post is in multiple categories
+            $stocks_arr = (array_key_exists($cat, $per_category_stock_lists) && !empty($per_category_stock_lists[$cat]) ? explode(',', $per_category_stock_lists[$cat]) : array() );
+            //$cats_used .= print_r($stock_list, true) . print_r($stocks_arr, true); //debug
+            $stock_list = array_merge($stocks_arr, $stock_list); //REM: take a unique later
+        }
+        if (empty($stock_list)) {
             $stock_list = $default_stock_list;
-            $cats_used = 'default';
+            //$cats_used = 'test '; //debug
         }
-        else {
-            $cats_used = '';
-            foreach ($category_ids as $cat) { //merge multiple stock lists together if post is in multiple categories
-                $stocks_arr = (array_key_exists($cat, $per_category_stock_lists) && !empty($per_category_stock_lists[$cat]) ? explode(',', $per_category_stock_lists[$cat]) : array() );
-                //$cats_used .= print_r($stock_list, true) . print_r($stocks_arr, true); //debug
-                $stock_list = array_merge($stocks_arr, $stock_list); //REM: take a unique later
-            }
-            if (empty($stock_list)) {
-                $stock_list = $default_stock_list;
-                //$cats_used = 'test ';
-            }
-            //$cats_used .= implode(',', $category_ids) . ' count: ' . count($stock_list) . ' default: ' . $per_category_stock_lists['default'] . ' printr ' . print_r($stock_list, true);
-            $cats_used .= implode(',', $category_ids);
-        }
-        
-        $tmp = stock_plugin_get_data(array_unique($stock_list)); //from stock_plugin_cache.php, expects an array or string | separated
-        $stock_data_list = array_values($tmp['valid_stocks']);   //NOTE: its ok to throw away the keys, they aren't used anywhere
-        
-        //NOTE: To make scrolling smooth, we want the number of stocks to always be greater than the number to be displayed simultaniously on the page
-        if (empty($stock_data_list)) {
-            return "<!-- WARNING: no stock list found for category: {$cats_used} -->";  //don't fail completely silently
-        }
+        //$cats_used .= implode(',', $category_ids) . ' count: ' . count($stock_list) . ' default: ' . $per_category_stock_lists['default'] . ' printr ' . print_r($stock_list, true); //debug
+        $cats_used .= implode(',', $category_ids);
+    }
+    
+    $tmp = stock_plugin_get_data(array_unique($stock_list)); //from stock_plugin_cache.php, expects an array or string | separated
+    $stock_data_list = array_values($tmp['valid_stocks']);   //NOTE: its ok to throw away the keys, they aren't used anywhere
+    
+    if (empty($stock_data_list)) {
+        return "<!-- WARNING: no stock list found for category: {$cats_used} -->";  //don't fail completely silently
+    }
 
-        $size           = get_option('stock_ticker_display_size');
-        $color_settings = get_option('stock_ticker_color_scheme');   //0 = txt-color  1 = bg-color
-        $font_options   = get_option('stock_ticker_font_options');   //NOTE: not configurable via shortcode at this time
-        
-        //use value in shortcode, otherwise use defaults
-        //Known Issue: IDs and attributes, each set of attributes should have a unique id specified by the user. Otherwise tickers may not display as intended
-        extract( shortcode_atts( array( //we can use nulls for this, since defaults are part of the validation
-                'id'                            => '0',
-                'width'                         => null,
-                'height'                        => null,
-                'text_color'                    => null,
-                'background_color'              => null,
-                'scroll_speed'                  => null,
-                'display'                       => null, 
-                ), $atts ) );
-                
-        //**********validation section***********
-        //NOTE: for validation, if option supplied was invalid, use the "global" setting
-        $width        = stock_plugin_validate_integer($width,  $stock_ticker_vp['width'][0],  $stock_ticker_vp['width'][1],  $size[0]);
-        $height       = stock_plugin_validate_integer($height, $stock_ticker_vp['height'][0], $stock_ticker_vp['height'][1], $size[1]);
-        
-        $text_color   = stock_plugin_validate_color($text_color,       $color_settings[0]);
-        $bg_color     = stock_plugin_validate_color($background_color, $color_settings[1]);
-        
-        $scroll_speed = stock_plugin_validate_integer($scroll_speed,     $stock_ticker_vp['scroll_speed'][0], $stock_ticker_vp['scroll_speed'][1], get_option('stock_ticker_scroll_speed'));
-        $num_ticker_to_display = stock_plugin_validate_integer($display, $stock_ticker_vp['max_display'][0],  $stock_ticker_vp['max_display'][1],  get_option('stock_ticker_display_number'));
-        //***********DONE validation*************
-                
-        $tmp = $stock_data_list; //holding for use within whileloop
-        while ($num_ticker_to_display >= count($stock_data_list)) { 
-            $stock_data_list = array_merge($tmp, $stock_data_list); //This should increase the length of stock_data_list to an even multiple of its original length
-        }
-        $entry_width = $width / $num_ticker_to_display;
-        
-        //****** fix scaling *******
-        //this section is to fix the width/height attributes so that incase the ticker would have had overlapping text, it fixes itself to a minimum acceptable level
-        $minimum_width = $font_options[0] * 4 * 4;  //point font * 4 characters * 4 elements ~ aproximate
-        $entry_width = max($minimum_width, $entry_width);
-        //****** end fix scaling ******* 
+    $size           = get_option('stock_ticker_display_size');
+    $color_settings = get_option('stock_ticker_color_scheme');   //0 = txt-color  1 = bg-color
+    $font_options   = get_option('stock_ticker_font_options');   //NOTE: not configurable via shortcode at this time
+    
+    //use value in shortcode, otherwise use defaults
+    //Known Issue: IDs and attributes, each set of attributes should have a unique id specified by the user. Otherwise tickers may not display as intended
+    extract( shortcode_atts( array( //we can use nulls for this, since defaults are part of the validation
+            'id'                            => '0',
+            'width'                         => null,
+            'height'                        => null,
+            'text_color'                    => null,
+            'background_color'              => null,
+            'scroll_speed'                  => null,
+            'display'                       => null
+            ), $atts ) );
+            
+    //**********validation section***********
+    global $stock_ticker_vp;
+    //NOTE: for validation, if option supplied was invalid, use the "global" setting
+    $width        = stock_plugin_validate_integer($width,  $stock_ticker_vp['width'][0],  $stock_ticker_vp['width'][1],  $size[0]);
+    $height       = stock_plugin_validate_integer($height, $stock_ticker_vp['height'][0], $stock_ticker_vp['height'][1], $size[1]);
+    
+    $text_color   = stock_plugin_validate_color($text_color,       $color_settings[0]);
+    $bg_color     = stock_plugin_validate_color($background_color, $color_settings[1]);
+    
+    $scroll_speed = stock_plugin_validate_integer($scroll_speed,     $stock_ticker_vp['scroll_speed'][0], $stock_ticker_vp['scroll_speed'][1], get_option('stock_ticker_scroll_speed'));
+    $num_ticker_to_display = stock_plugin_validate_integer($display, $stock_ticker_vp['max_display'][0],  $stock_ticker_vp['max_display'][1],  get_option('stock_ticker_display_number'));
+    //***********DONE validation*************
+    
+    //NOTE: To make scrolling smooth, we want the number of stocks to always be greater than the number to be displayed simultaniously on the page
+    $tmp = $stock_data_list; //holding for use within whileloop
+    while ($num_ticker_to_display >= count($stock_data_list)) { 
+        $stock_data_list = array_merge($tmp, $stock_data_list); //This should increase the length of stock_data_list to an even multiple of its original length
+    }
+    $entry_width = $width / $num_ticker_to_display;
+    
+    //****** fix scaling *******
+    //this section is to fix the width/height attributes so that incase the ticker would have had overlapping text, it fixes itself to a minimum acceptable level
+    $minimum_width = $font_options[0] * 4 * 4;  //point font * 4 characters * 4 elements ~ aproximate
+    $entry_width = max($minimum_width, $entry_width);
+    //****** end fix scaling ******* 
 
-        $output  = stock_ticker_create_css_header($id, $entry_width, $width, $height, $text_color, $bg_color);
-        $output .= stock_ticker_create_ticker    ($id, $entry_width, $stock_data_list, $scroll_speed);
+    $output  = stock_ticker_create_css_header($id, $entry_width, $width, $height, $text_color, $bg_color);
+    $output .= stock_ticker_create_ticker    ($id, $entry_width, $stock_data_list, $scroll_speed);
 
-        return $output;
+    return $output;
 }
 
 //Creates the internal style sheet for all of the various elements.

@@ -27,9 +27,13 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 */
 
-include WP_CONTENT_DIR.'/plugins/custom-stock-ticker/stock_ticker_display.php';
-include WP_CONTENT_DIR.'/plugins/custom-stock-ticker/stock_plugin_cache.php';
-include WP_CONTENT_DIR.'/plugins/custom-stock-ticker/stock_plugin_utils.php'; //contains validation functions
+if (!defined('STOCK_PLUGIN_UTILS') ) {
+    include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_plugin_utils.php'; //contains validation functions
+}
+if (!defined('STOCK_PLUGIN_CACHE') ) {
+    include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_plugin_cache.php';
+}
+    include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_ticker_display.php';
 
 $stock_ticker_vp = array( //validation_parameters
 'max_display'  => array(1,20),
@@ -43,7 +47,7 @@ function stock_ticker_activate() {
 
     /********************** Defaults for the plugin  ****************************/
     //NOTE: add_option only adds if option does not already exist
-    add_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG, YHOO, AAPL'));
+    add_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL')); //Important no spaces
     //add_option('stock_ticker_default_market',           "DOW"); //unused but maybe in future
 
     //data display option: Market, Symbol, Last value, change value, change percentage, last trade
@@ -150,7 +154,7 @@ add_action('admin_menu', 'stock_ticker_admin_actions');
 // This function is to reset all options inserted into wordpress DB by stock ticker to their default first run initialization values
 function stock_ticker_reset_options() {
 
-   update_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL'));
+   update_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL')); //Important no spaces
    //update_option('stock_ticker_default_market',           "DOW");  //unused
 
    //data display option: Market, Symbol, Last value, change value, change percentage, last trade
@@ -308,11 +312,13 @@ function stock_ticker_update_display_options(){
         update_option('stock_ticker_draw_triangle',       array_key_exists('create_triangle',      $_POST));
         update_option('stock_ticker_enable_change_color', array_key_exists('enable_change_color',  $_POST));
         
+        global $stock_ticker_vp;
         //these will return either the cleaned up value, or a minimum, or maximum value, or the default (arg2)
         //If returns false, it will NOT update them, and the display creation function will continue to use the most recently saved value
         //IN FUTURE: this will be replaced with AJAX and javascript validation
-        //stock_ticker_validate_integer($new_val, $min_val, $max_val, $default)
-	$tmp = stock_plugin_validate_integer($_POST['max_display'],  $stock_ticker_vp['max_display'][0],  $stock_ticker_vp['max_display'][1],  false);
+        
+        //NOTE: stock_ticker_validate_integer($new_val, $min_val, $max_val, $default)
+        $tmp = stock_plugin_validate_integer($_POST['max_display'],  $stock_ticker_vp['max_display'][0],  $stock_ticker_vp['max_display'][1],  false);
         if ($tmp) { update_option('stock_ticker_display_number', $tmp); }
         
         $tmp = stock_plugin_validate_integer($_POST['scroll_speed'], $stock_ticker_vp['scroll_speed'][0], $stock_ticker_vp['scroll_speed'][1], false);
@@ -323,11 +329,13 @@ function stock_ticker_update_display_options(){
         $tmp2 = stock_plugin_validate_integer($_POST['height'],      $stock_ticker_vp['height'][0],       $stock_ticker_vp['height'][1],  $current_display[1]);
         update_option('stock_ticker_display_size', array($tmp1, $tmp2));
         
+        // VALIDATE fonts
         $current_font_opts = get_option('stock_ticker_font_options');
         $tmp1 = stock_plugin_validate_integer($_POST['font_size'],   $stock_ticker_vp['font_size'][0], $stock_ticker_vp['font_size'][1],  $current_font_opts[0]);
         $tmp2 = stock_plugin_validate_font_family($_POST['font_family'], $current_font_opts[1]);
         update_option('stock_ticker_font_options', array($tmp1, $tmp2));
        
+        // VALIDATE COLORS
         $current_colors = get_option('stock_ticker_color_scheme');
         $tmp1 = stock_plugin_validate_color($_POST['text_color'],        $current_colors[0]);
         $tmp2 = stock_plugin_validate_color($_POST['background_color1'], $current_colors[1]);
