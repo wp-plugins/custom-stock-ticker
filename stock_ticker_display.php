@@ -85,19 +85,22 @@ function stock_ticker($atts){ //attributes are whats include between the [] of t
             'width'                         => null,
             'height'                        => null,
             'text_color'                    => null,
-            'background_color'              => null,
+            'background_color'              => null, //for backwards compat
+            'bgcolor'                       => null, //new shorter version
             'scroll_speed'                  => null,
             'display'                       => null
             ), $atts ) );
-            
+    
+    if ($bgcolor == null) { $bgcolor = $background_color; } //always use bgcolor instead of background_color if available
+    
     //**********validation section***********
     global $stock_ticker_vp;
     //NOTE: for validation, if option supplied was invalid, use the "global" setting
     $width        = stock_plugin_validate_integer($width,  $stock_ticker_vp['width'][0],  $stock_ticker_vp['width'][1],  $size[0]);
     $height       = stock_plugin_validate_integer($height, $stock_ticker_vp['height'][0], $stock_ticker_vp['height'][1], $size[1]);
     
-    $text_color   = stock_plugin_validate_color($text_color,       $color_settings[0]);
-    $bg_color     = stock_plugin_validate_color($background_color, $color_settings[1]);
+    $text_color   = stock_plugin_validate_color($text_color, $color_settings[0]);
+    $bgcolor      = stock_plugin_validate_color($bgcolor,    $color_settings[1]);
     
     $scroll_speed = stock_plugin_validate_integer($scroll_speed,     $stock_ticker_vp['scroll_speed'][0], $stock_ticker_vp['scroll_speed'][1], get_option('stock_ticker_scroll_speed'));
     $num_ticker_to_display = stock_plugin_validate_integer($display, $stock_ticker_vp['max_display'][0],  $stock_ticker_vp['max_display'][1],  get_option('stock_ticker_display_number'));
@@ -116,14 +119,14 @@ function stock_ticker($atts){ //attributes are whats include between the [] of t
     $entry_width = max($minimum_width, $entry_width);
     //****** end fix scaling ******* 
 
-    $output  = stock_ticker_create_css_header($id, $entry_width, $width, $height, $text_color, $bg_color);
+    $output  = stock_ticker_create_css_header($id, $entry_width, $width, $height, $text_color, $bgcolor);
     $output .= stock_ticker_create_ticker    ($id, $entry_width, $stock_data_list, $scroll_speed);
 
     return $output;
 }
 
 //Creates the internal style sheet for all of the various elements.
-function stock_ticker_create_css_header($id, $entry_width, $width, $height, $text_color, $bg_color) {
+function stock_ticker_create_css_header($id, $entry_width, $width, $height, $text_color, $bgcolor) {
         $font_options    = get_option('stock_ticker_font_options');
         $opacity_options = get_option('stock_ticker_opacity');
         $display_data    = get_option('stock_ticker_data_display');
@@ -139,7 +142,7 @@ function stock_ticker_create_css_header($id, $entry_width, $width, $height, $tex
         //variables to be used inside the heredoc
         //NOTE: entries are an individual stock with multiple elements
         //NOTE: elements are pieces of an entry, EX.  ticker_name & price are each elements
-        $advanced_style = get_option('stock_ticker_advanced_style');//make sure this has a ; at the end
+        $advanced_style = get_option('stock_ticker_advanced_style'); //TODO: make sure this has a ; at the end
         
         //QUESTION: do we want to not write to page the triangle or vertical line css rules portions unless config calls for it?
         $triangle_size  = $font_options[0] - 4;                         //triangle should be smaller than standard text
@@ -155,7 +158,7 @@ function stock_ticker_create_css_header($id, $entry_width, $width, $height, $tex
    opacity:          0;
    width:            {$width}px;
    height:           {$height}px;
-   background-color: {$bg_color};
+   background-color: {$bgcolor};
    {$advanced_style}
 }
 .stock_ticker_{$id} .stock_ticker_slider {

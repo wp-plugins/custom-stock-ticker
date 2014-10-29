@@ -199,7 +199,7 @@ HEREDOC;
     }
     stock_ticker_create_display_options();
     echo <<<HEREDOC
-   <div class="postbox-container ticker-options" style="display:block; clear:both; width:750px;">
+   <div class="postbox-container ticker-options" style="display:block; clear:both; width:818px;">
       <div id="normal-sortables" class="meta-box-sortables ui-sortable">
          <div id="referrers" class="postbox">
             <h3 class="hndle"><span>Preview</span></h3>
@@ -207,24 +207,24 @@ HEREDOC;
                <p>The following ticker uses the default shortcode:<code>[stock-ticker]</code></p>
 HEREDOC;
     echo do_shortcode('[stock-ticker]'); //Feature Improvement: see tracker #22775
-    $example_id_01 = "[stock-ticker id='example_id_01' display='3' width='700' height='40' background_color='black' text_color='yellow' scroll_speed='60']";
+    $example = "[stock-ticker id='example' display='2' width='700' height='40' bgcolor='#000' text_color='yellow' scroll_speed='75']";
     echo <<<HEREDOC
                <p>Note: To preview your settings, you must save changes.</p>
             </div>
          </div>
       </div>
    </div>
-   <div class="postbox-container ticker-options" style="display:block; clear:both; width:750px;">
+   <div class="postbox-container ticker-options" style="display:block; clear:both; width:818px;">
       <div id="normal-sortables" class="meta-box-sortables ui-sortable">
          <div id="referrers" class="postbox">
             <h3 class="hndle"><span>Advanced</span></h3>
             <div class="inside">
                <p>If you want to run a custom style or run additional tickers aside from the default [stock-ticker], 
                you can specify the style parameters in the shortcode. See the example below:</p>
-               <input type="text" onclick="this.select();" readonly="readonly" value="$example_id_01" class="shortcode-in-list-table wp-ui-text-highlight code" style="width: 100%; font-size: smaller;">
+               <textarea onclick="this.select();" readonly="readonly" class="shortcode-in-list-table wp-ui-text-highlight code" style="width: 100%; font-size: smaller;">{$example}</textarea>
                <br/><br/>
 HEREDOC;
-    echo do_shortcode($example_id_01);
+    echo do_shortcode($example);
     echo <<<HEREDOC
                <p>Note: In order to display tickers with different settings on the same page, one <b>must</b> assign a unique id in the shortcode for each ticker.</p>
             </div>
