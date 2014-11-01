@@ -125,7 +125,7 @@ register_activation_hook( __FILE__, 'stock_ticker_activate' );
 
 //*********cleanup and conversion functions for updating versions *********
 if (get_option('stock_ticker_category_stock_list')) { //this old option exists
-    stock_ticker_convert_old_category_stock_list();
+    stock_plugin_convert_old_category_stock_list('ticker');
 }
 //*************************************************************************
 
@@ -244,35 +244,32 @@ function stock_ticker_create_display_options(){
                     <div id='referrers' class='postbox'>
                         <h3 class='hndle'>Default Ticker Display Settings</h3>
                         <div class='inside'>";
-                            stock_ticker_create_default_settings_field();
+                            stock_ticker_create_template_field();
         echo "              <p>All options below are <b>optional</b>.<br/>All are reset by choosing a styles above.</p>
                             <div class='ticker-options-subsection'>
                                 <h4>Ticker Config</h4><br/>";
-                                stock_ticker_create_size_field();
-                                stock_ticker_create_max_display_field();
-        echo "                  <br/>";
-                                stock_ticker_create_background_color_field();  //FOR FUTURE: add in a color swatch of some sort
+                                stock_ticker_create_ticker_config(); //FOR FUTURE: add in a color swatch of some sort
         echo "              </div>
                             <div class='ticker-options-subsection'>
                                 <h4>Text Config</h4><br/>";
-                                stock_ticker_create_font_field();
+                                stock_ticker_create_text_config();
         echo "              </div>
                             <div class='ticker-options-subsection'>
                                 <h4>Stock Display Config</h4><br/>";
-                                stock_ticker_create_draw_lines_field(); //TODO: rename these create functions to the section names and merge functions into the sections
+                                stock_ticker_create_display_config();
         echo "              </div>
                             <div class='ticker-options-subsection'>
                                 <h4>Advanced Styling</h4>
-                                <div class='ticker_admin_toggle'>+</div>
-                                <div class='ticker-options-display'>";
+                                <div class='section_toggle'>+</div>
+                                <div class='section-options-display'>";
                                     stock_ticker_create_style_field();
         echo "                  </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <input type='submit' style='margin-bottom:20px;' name='save_changes' value='Save Changes' class='button-primary'/>
-                <input type='submit' style='margin-bottom:20px;' name='reset_options' value='Reset to Defaults' class='button-primary'/>
+                <input type='submit' name='save_changes'  value='Save Changes'      class='button-primary' style='margin-bottom:20px;' />
+                <input type='submit' name='reset_options' value='Reset to Defaults' class='button-primary' style='margin-bottom:20px;' />
              </div>
         
              <div class='postbox-container ticker-options' style='width: 45%; clear:right;'>
@@ -280,7 +277,7 @@ function stock_ticker_create_display_options(){
                      <div id='referrers' class='postbox'>
                          <h3 class='hndle'><span>Stocks</span></h3>
                          <div class='inside'>
-                             <p>Type in your stocks as a comma-separated list.<br/> 
+                             <p>Type in your stocks as a comma-separated list.<br /> 
                              Example: <code>GOOG,YHOO,AAPL</code>.</p>
                              <p>
                                  When a page loads with a ticker, the stocks list of the category of that page is loaded. 
@@ -289,7 +286,7 @@ function stock_ticker_create_display_options(){
                              <p>For Nasdaq, use <code>^IXIC</code>. For S&amp;P500, use <code>^GSPC</code>. Unfortunately, DOW is currently not available.</p>
                              <p>Here are some example stocks you can try:<br/>
                              BAC, CFG, AAPL, YHOO, SIRI, VALE, QQQ, GE, MDR, RAD, BABA, SUNE, FB, BBRY, MSFT, MU, PFE, F, GOOG</p>"; 
-                             stock_ticker_create_per_category_stock_lists();
+                             stock_plugin_create_per_category_stock_lists('ticker');
         echo "           </div>
                      </div>
                  </div>
@@ -298,12 +295,12 @@ function stock_ticker_create_display_options(){
     return;
 }
 
-function stock_ticker_update_display_options(){
-    stock_ticker_update_per_category_stock_lists();
+function stock_ticker_update_display_options() {
+    stock_ticker_update_per_category_stock_lists('ticker');
     
-    $apply_template = $_POST['default_settings'];
+    $apply_template = $_POST['template'];
     if($apply_template != '-------') {
-        stock_ticker_update_default_settings_field($apply_template); //this is actually apply template
+        stock_ticker_apply_template($apply_template);
     }
     else { //all of these settings are handled by the template, therefore don't bother updating them if 
    
@@ -347,130 +344,41 @@ function stock_ticker_update_display_options(){
         $tmp2 = stock_plugin_validate_opacity($_POST['background_opacity'], $current_opacity[1]);
         update_option('stock_ticker_opacity', array($tmp1, $tmp2));
         
-        update_option('stock_ticker_advanced_style', $_POST['ticker_advanced_style']); //no validation needed
+        $tmp = trim($_POST['ticker_advanced_style']); //strip spaces
+        if (substr($tmp, -1) != ';') { $tmp .= ';'; } //poormans making of a css rule
+        update_option('stock_ticker_advanced_style', $tmp);
     }
 }
 
-function stock_ticker_create_category_stock_list($id, $stocks_string) { //this is a helper function for stock_ticker_create_per_category_stock_lists()
-    $name = ($id == 'default') ? 'Default' : get_cat_name($id);
-    echo <<<LABEL
-        <label for="input_{$id}_stocks">{$name}</label><br/>
-        <input id="input_{$id}_stocks" name="stocks_for_{$id}" type="text" value="{$stocks_string}" style="width:100%; font-size:14px" />
-        
-LABEL;
-}
-
-//Generates the html input lines for the list of stocks in each category
-function stock_ticker_create_per_category_stock_lists() {
-    
-    $per_category_stock_lists = get_option('stock_ticker_per_category_stock_lists'); 
-    //this is a sparce array indexed by category ID, the values will be a string of stocks
-    // Array('default'=>'blah,blah,blah', '132'=>'foo,bar') etc
-    
-    stock_ticker_create_category_stock_list('default', $per_category_stock_lists['default']);
-    echo "<br/><span style='font-weight:bold;'>WARNING:</span><br/>If Default is blank, Stock Tickers on pages without categories will be disabled.<br/>";
-    
-    $category_terms = get_terms('category');
-    if (count($category_terms)) { //NOTE: this may display without any categories below IF and only if there is only the uncategorized category
-        echo "<h4 style='display:inline-block;'>Customize Categories</h4>
-              <div id='ticker_category_toggle' class='ticker_admin_toggle'>+</div>
-                   <div class='ticker-options-display'>";
-        
-        foreach ($category_terms as $term) {
-            if ($term->slug == 'uncategorized') { continue; }
-            $cat_id = $term->term_id; 
-            $stocks_string = (array_key_exists($cat_id, $per_category_stock_lists) ? $per_category_stock_lists[$cat_id] : '');
-            stock_ticker_create_category_stock_list($cat_id, $stocks_string);
-        }
-        echo "</div>";
-    }
-    else {
-        echo "<p> Your site does not appear to have any categories to display.</p>";
-    }
-}
-
-function get_post_vars_for_category_stock_lists() {
-    $arr_result = array(); //to be returned
-    foreach ($_POST as $key => $value) {    
-        if(substr($key, 0, 11)  == 'stocks_for_') {
-             $arr_result[substr($key, 11)] = $value; //use the portion of the key that isn't stocks_for_
-        }
-    }
-    return $arr_result;
-}
-
-function stock_ticker_update_per_category_stock_lists() {
-
-    //Start with what is already in the database, so that we don't erase what is there in the case where categories get removed then added back in later
-    $per_category_stock_lists  = get_option('stock_ticker_per_category_stock_lists', array()); //defaults to empty array
-    $all_stock_list            = array();
-    $category_stock_input_list = get_post_vars_for_category_stock_lists();
-    
-    foreach ($category_stock_input_list as $key => $value) {
-        if (empty($value)) {
-            $per_category_stock_lists[$key]  = $value;  //final string value and nothing more needed
-            $category_stock_input_list[$key] = array(); //for future
-        }
-        else {
-            $stock_str = preg_replace('/\s+/', '', strtoupper($value)); //capitalize the stock values, and remove spaces
-            $stock_arr = explode(',', $stock_str);
-            $category_stock_input_list[$key] = $stock_arr; //replace the string with an array for future use
-            $all_stock_list = array_merge($all_stock_list, $stock_arr);
-        }
-    }
-    $cache_output = stock_plugin_get_data(array_unique($all_stock_list)); //from stock_plugin_cache.php
-    $invalid_stocks = $cache_output['invalid_stocks']; //we only need the invalid_stocks for validation
-    foreach ($category_stock_input_list as $key => $stock_list) {
-        //remove any invalid_stocks from the stock_list, then convert back to string for storage
-        $per_category_stock_lists[$key] = implode(',', array_diff($stock_list, $invalid_stocks)); //NOTE: we need to do this even if invalid stocks are empty
-    }
-    echo "<p style='font-size:14px;font-weight:bold;'>The following stocks were not found:" . implode(', ', $invalid_stocks) . "</p>";
-    update_option('stock_ticker_per_category_stock_lists', $per_category_stock_lists); //shove the updated option back into database
-}
-
-function stock_ticker_create_max_display_field(){
-    ?>
-        <label for="input_max_display">Number of stocks displayed on the screen at one time: </label>
-        <input  id="input_max_display"  name="max_display"   type="text" value="<?php echo get_option('stock_ticker_display_number'); ?>" style="width:29px; font-size:14px; text-align:center" />
-        <label for="input_scroll_speed">Scroll speed (Pixels per second): </label>
-        <input  id="input_scroll_speed" name="scroll_speed"  type="text" value="<?php echo get_option('stock_ticker_scroll_speed'); ?>"   style="width:36px; font-size:14px; text-align:center" />
-
-    <?php
-}
-
-
-function stock_ticker_create_background_color_field(){
-    //$color_sets=get_option('stock_ticker_default_color_scheme');
+function stock_ticker_create_ticker_config() {
+    $size           = get_option('stock_ticker_display_size');
     $current_colors = get_option('stock_ticker_color_scheme');
     $opacity_set    = get_option('stock_ticker_opacity');
-    ?>
-    <label for="input_background_color">Background color: </label>
-    <input  id="input_background_color" name="background_color1"     type="text" value="<?php echo $current_colors[1]; ?>" style="width:70px" />
-    <br/>
-    <label for="input_background_opacity">Background opacity (0-1): </label>
-    <input  id="input_background_opacity" name="background_opacity"  type="text" value="<?php echo $opacity_set[1]; ?>"    style="width:29px; font-size:14px; text-align:center" />
-
-
-<?php
-
-}
-
-
-function stock_ticker_create_size_field(){
-    $size = get_option('stock_ticker_display_size');
+    //$color_sets=get_option('stock_ticker_default_color_scheme');
     ?>
         <label for="input_stock_tickerwidth">Width: </label>
         <input  id="input_stock_tickerwidth"   name="width"   type="text" value="<?php echo $size[0]; ?>" style="width:60px; font-size:14px" />
         <label for="input_stock_ticker_height">Height: </label>
         <input  id="input_stock_ticker_height" name="height"  type="text" value="<?php echo $size[1]; ?>" style="width:60px; font-size:14px" />
+        
+        <br />
+        <label for="input_max_display">Number of stocks displayed on the screen at one time: </label>
+        <input  id="input_max_display"  name="max_display"   type="text" value="<?php echo get_option('stock_ticker_display_number'); ?>" style="width:29px; font-size:14px; text-align:center" />
+        <label for="input_scroll_speed">Scroll speed (Pixels per second): </label>
+        <input  id="input_scroll_speed" name="scroll_speed"  type="text" value="<?php echo get_option('stock_ticker_scroll_speed'); ?>"   style="width:36px; font-size:14px; text-align:center" />
+        
+        <br />
+        <label for="input_background_color">Background color: </label>
+        <input  id="input_background_color" name="background_color1"     type="text" value="<?php echo $current_colors[1]; ?>" style="width:70px" />
+        <br />
+        <label for="input_background_opacity">Background opacity (0-1): </label>
+        <input  id="input_background_opacity" name="background_opacity"  type="text" value="<?php echo $opacity_set[1]; ?>"    style="width:29px; font-size:14px; text-align:center" />
     <?php
-
 }
 
-function stock_ticker_create_font_field(){
+function stock_ticker_create_text_config() {
     $font_options  = get_option('stock_ticker_font_options');
     //$default_fonts = get_option('stock_ticker_default_fonts');
-    //TODO: why not use a regular dropdown instead of this datalist? We don't have an authentication, nor enough fonts to make it worth while
     $default_fonts = array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "serif", "Times");
     $current_colors= get_option('stock_ticker_color_scheme');
     $opacity_set   = get_option('stock_ticker_opacity');
@@ -488,7 +396,7 @@ function stock_ticker_create_font_field(){
         <label for="input_font_family">Font family: </label>
         <input  id="input_font_family" name="font_family" list="font_family" value="<?php echo $font_options[1]; ?>" autocomplete="on" style="width:70px" />
         <datalist id="font_family"><!-- used as an "autocomplete dropdown" within the input text field -->
-        <?php
+        <?php  //Any real reason to not use a regular dropdown instead?
             foreach($default_fonts as $font) {
                 echo "<option value='{$font}'></option>";
             }
@@ -498,7 +406,7 @@ function stock_ticker_create_font_field(){
 }
 
 //generates all of the checkboxes in the admin page
-function stock_ticker_create_draw_lines_field(){
+function stock_ticker_create_display_config() {
     ?>
     <input  id="input_create_vertical_dash" name="create_vertical_dash" type="checkbox" <?php echo (get_option('stock_ticker_draw_vertical_lines') ? 'checked' : '')?>>
     <label for="input_create_vertical_dash">Draw vertical lines</label>   
@@ -514,7 +422,7 @@ function stock_ticker_create_draw_lines_field(){
 }
 
 
-function stock_ticker_create_default_settings_field(){
+function stock_ticker_create_template_field() {
 
     $all_settings = get_option('stock_ticker_default_settings');
     ?>
@@ -530,7 +438,7 @@ function stock_ticker_create_default_settings_field(){
     <?php
 }
 
-function stock_ticker_update_default_settings_field($selected_template) { //this is actually apply template
+function stock_ticker_apply_template($selected_template) {
     
     $all_settings      = get_option('stock_ticker_default_settings'); //get the preset templates
     $template_settings = $all_settings[$selected_template]; 
@@ -541,9 +449,9 @@ function stock_ticker_update_default_settings_field($selected_template) { //this
     update_option('stock_ticker_font_options', $option_holder);
 
     //updates opacity settings
-    update_option('stock_ticker_opacity', array($template_settings['text_opacity'], $template_settings['background_opacity']));
+    update_option('stock_ticker_opacity',      array($template_settings['text_opacity'], $template_settings['background_opacity']));
     //update color scheme
-    update_option('stock_ticker_color_scheme', array($template_settings['font_color'], $template_settings['back_color']));
+    update_option('stock_ticker_color_scheme', array($template_settings['font_color'],   $template_settings['back_color']));
 
     //update vertical lines, triangles, and change color
     update_option('stock_ticker_draw_vertical_lines', $template_settings['verti_lines']);
@@ -553,7 +461,7 @@ function stock_ticker_update_default_settings_field($selected_template) { //this
 
 }
 
-function stock_ticker_create_style_field(){
+function stock_ticker_create_style_field() {
     echo "<p>If you have additional CSS rules you want to apply to the entire ticker (such as alignment or borders) you can add them below.</p>
           <p> Example: <code>margin:auto; border:1px solid #000000;</code></p>";
     $advanced_styling = get_option('stock_ticker_advanced_style');
@@ -563,7 +471,7 @@ function stock_ticker_create_style_field(){
 
 
 /* //unused
-function stock_ticker_create_display_type_field(){
+function stock_ticker_create_display_type_field() {
     $all_types    = get_option('stock_ticker_all_display_types');
     $current_type = get_option('stock_ticker_display_type');
     ?>
@@ -584,7 +492,7 @@ function stock_ticker_create_display_type_field(){
 }
 
 
-function stock_ticker_update_display_type_field(){
+function stock_ticker_update_display_type_field() {
     update_option('stock_ticker_display_type', $_POST['display_type']);
 }
 */
@@ -616,29 +524,4 @@ function stock_ticker_update_market_list(){
         $market = $_POST['markets'];
         update_option('stock_ticker_default_market', $market);
 }*/
-
-function stock_ticker_convert_old_category_stock_list() {
-    $new_category_stock_list = array();
-    $old_category_stock_list = get_option('stock_ticker_category_stock_list');
-    $category_terms          = get_terms('category');
-    foreach ($old_category_stock_list as $old_category => $old_stock_list) {
-        if ($old_category == 'Default') { $new_category = 'default'; }
-        else {
-            foreach ($category_terms as $term) {
-                if (preg_replace('/\s+/', '', $term->name) == $old_category) {
-                    $new_category = $term->term_id;
-                    break; //break out of inner loop
-                }
-            }
-        }
-        //NOTE: if we didn't find a new_category, just throw it out and continue
-        $new_stock_list = implode(',', $old_stock_list);
-        $new_category_stock_list[$new_category] = $new_stock_list;
-    }
-    
-    update_option('stock_ticker_per_category_stock_lists', $new_category_stock_list); //can't use add because add would have run on initialize
-    delete_option('stock_ticker_category_stock_list');
-}
-
-
 ?>

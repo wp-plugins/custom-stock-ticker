@@ -56,14 +56,11 @@ function stock_ticker($atts){ //attributes are whats include between the [] of t
         $cats_used = '';
         foreach ($category_ids as $cat) { //merge multiple stock lists together if post is in multiple categories
             $stocks_arr = (array_key_exists($cat, $per_category_stock_lists) && !empty($per_category_stock_lists[$cat]) ? explode(',', $per_category_stock_lists[$cat]) : array() );
-            //$cats_used .= print_r($stock_list, true) . print_r($stocks_arr, true); //debug
             $stock_list = array_merge($stocks_arr, $stock_list); //REM: take a unique later
         }
         if (empty($stock_list)) {
             $stock_list = $default_stock_list;
-            //$cats_used = 'test '; //debug
         }
-        //$cats_used .= implode(',', $category_ids) . ' count: ' . count($stock_list) . ' default: ' . $per_category_stock_lists['default'] . ' printr ' . print_r($stock_list, true); //debug
         $cats_used .= implode(',', $category_ids);
     }
     
@@ -130,27 +127,28 @@ function stock_ticker_create_css_header($id, $entry_width, $width, $height, $tex
         $font_options    = get_option('stock_ticker_font_options');
         $opacity_options = get_option('stock_ticker_opacity');
         $display_data    = get_option('stock_ticker_data_display');
+        $advanced_style  = get_option('stock_ticker_advanced_style');
 
         $text_opacity = $opacity_options[0];
         //$back_opacity = $opacity_options[1]; //NOTE: background_opacity is zero here, so that fade-in has something to fade
+        
         $number_of_values = array_sum($display_data);
-        if (get_option('stock_ticker_draw_triangle')){
-                $element_width = ($entry_width - 20) / $number_of_values;
-        } else{
-                $element_width = $entry_width / $number_of_values;
+        if (get_option('stock_ticker_draw_triangle')) {
+                $element_width = round(($entry_width - 20) / $number_of_values, 0, PHP_ROUND_HALF_DOWN);
+        } else {
+                $element_width = round($entry_width / $number_of_values,        0, PHP_ROUND_HALF_DOWN);
         }
         //variables to be used inside the heredoc
         //NOTE: entries are an individual stock with multiple elements
         //NOTE: elements are pieces of an entry, EX.  ticker_name & price are each elements
-        $advanced_style = get_option('stock_ticker_advanced_style'); //TODO: make sure this has a ; at the end
         
         //QUESTION: do we want to not write to page the triangle or vertical line css rules portions unless config calls for it?
         $triangle_size  = $font_options[0] - 4;                         //triangle should be smaller than standard text
         $triangle_left_position = $entry_width - 10 - ($triangle_size); //the triangle doesn't need much space
-        $triangle_top_position  = $height / 2 - $triangle_size / 2;     //center the triangle on the line
+        $triangle_top_position  = round(($height / 2) - ($triangle_size / 2), 0, PHP_ROUND_HALF_DOWN);     //center the triangle on the line
         
-        $vbar_height = $height * 0.7; //used for the vertical bar only
-        $vbar_top    = ($height - $vbar_height) / 2; 
+        $vbar_height = round($height * 0.7,                0, PHP_ROUND_HALF_DOWN); //used for the vertical bar only
+        $vbar_top    = round(($height - $vbar_height) / 2, 0, PHP_ROUND_HALF_DOWN); 
         //NOTE: stock_ticker_{$id} is actually a class, so we can properly have multiple per page, IDs would have to be globally unique
         return <<<HEREDOC
 <style type="text/css" scoped>
