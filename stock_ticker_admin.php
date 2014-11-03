@@ -182,7 +182,7 @@ function stock_ticker_reset_options() {
 function stock_ticker_admin_page() {
 
     echo <<<HEREDOC
-<div id="ticker-options-page" style="max-width:850px;">
+<div id="ticker-options-page" style="width:850px;">
     <h1>Custom Stock Ticker</h1>
     <p>The stock ticker plugin allows you to create and run your own custom stock tickers.</p>
     <p>Choose your stocks and display settings below.<br />
@@ -199,7 +199,7 @@ HEREDOC;
     }
     stock_ticker_create_display_options();
     echo <<<HEREDOC
-   <div class="postbox-container ticker-options" style="display:block; clear:both; width:818px;">
+   <div class="postbox-container ticker-options" style="display:block; clear:both; width:818px; margin-top:20px;">
       <div id="normal-sortables" class="meta-box-sortables ui-sortable">
          <div id="referrers" class="postbox">
             <h3 class="hndle"><span>Preview</span></h3>
@@ -226,11 +226,12 @@ HEREDOC;
 HEREDOC;
     echo do_shortcode($example);
     echo <<<HEREDOC
-               <p>Note: In order to display tickers with different settings on the same page, one <b>must</b> assign a unique id in the shortcode for each ticker.</p>
+               <p>Note: In order to display stock tickers with different settings on the same page, each <b>must</b> have a unique id assigned in the shortcode.</p>
             </div>
          </div>
       </div>
    </div>
+   <div class="clear"></div>
 </div><!-- end options page -->
 HEREDOC;
 }//End Stock_ticker_admin_page
@@ -268,8 +269,10 @@ function stock_ticker_create_display_options(){
                         </div>
                     </div>
                 </div>
-                <input type='submit' name='save_changes'  value='Save Changes'      class='button-primary' style='margin-bottom:20px;' />
-                <input type='submit' name='reset_options' value='Reset to Defaults' class='button-primary' style='margin-bottom:20px;' />
+                <input type='submit' name='save_changes'  value='Save Changes'      class='button-primary' />
+                <input type='submit' name='reset_options' value='Reset to Defaults' class='button-primary' /><sup>*</sup>
+                <br />
+                <sup>* NOTE: 'Reset to Defaults' also clears all stock lists.</sup>
              </div>
         
              <div class='postbox-container ticker-options' style='width: 45%; clear:right;'>
@@ -296,7 +299,7 @@ function stock_ticker_create_display_options(){
 }
 
 function stock_ticker_update_display_options() {
-    stock_ticker_update_per_category_stock_lists('ticker');
+    stock_plugin_update_per_category_stock_lists('ticker'); //NOTE: This has to be done every time, because templates don't contain any stock lists
     
     $apply_template = $_POST['template'];
     if($apply_template != '-------') {
@@ -427,7 +430,7 @@ function stock_ticker_create_template_field() {
     $all_settings = get_option('stock_ticker_default_settings');
     ?>
         <label for="input_default_settings">Template: </label>
-        <select id="input_default_settings" name="default_settings" style="width:180px;">
+        <select id="input_default_settings" name="template" style="width:180px;">
         <option selected> ------- </option>
         <?php 
             foreach($all_settings as $key=>$setting){

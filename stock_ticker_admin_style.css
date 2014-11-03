@@ -68,7 +68,7 @@ h3.hndle {
     display: inline-block;
 }
 
-#ticker_category_toggle{
+#category_toggle{
     display: inline-block;
     cursor:pointer;
     text-align: center;
