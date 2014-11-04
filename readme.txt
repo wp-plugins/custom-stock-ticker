@@ -154,6 +154,6 @@ Plugin released.
 
 == Upgrade Notice ==
 
-= 1.2 =
+= 1.1.1 =
 
 Update to maintain compatability with our other plugins.
