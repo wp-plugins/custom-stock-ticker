@@ -5,7 +5,7 @@
     Plugin URI: http://relevad.com/wp-plugins/
     Description: Create customizable moving stock tickers that can be placed anywhere on a site using shortcodes.
     Author: Relevad
-    Version: 1.1.1
+    Version: 1.2
     Author URI: http://relevad.com/
 
 */
@@ -373,6 +373,7 @@ function stock_ticker_create_ticker_config() {
         <br />
         <label for="input_background_color">Background color: </label>
         <input  id="input_background_color" name="background_color1"     type="text" value="<?php echo $current_colors[1]; ?>" style="width:101px" />
+	<sup><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" style="text-decoration:none">[?]</a></sup>
         <br />
         <label for="input_background_opacity">Background opacity (0-1): </label>
         <input  id="input_background_opacity" name="background_opacity"  type="text" value="<?php echo $opacity_set[1]; ?>"    style="width:60px; font-size:14px; text-align:center" />
@@ -388,6 +389,7 @@ function stock_ticker_create_text_config() {
     ?>
         <label for="input_text_color">Text color: </label>
         <input  id="input_text_color" name="text_color"     type="text"  value="<?php echo $current_colors[0]; ?>" style="width:101px" />
+	<sup><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" style="text-decoration:none">[?]</a></sup>
         
         
         <label for="input_font_size">Font size: </label>
