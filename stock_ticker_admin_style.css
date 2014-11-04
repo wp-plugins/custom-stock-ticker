@@ -18,7 +18,7 @@
     padding:6px 10px;
 }
 .ticker-options #input_default_settings {
-    font-size:smaller;
+    /*font-size:smaller;*/
     text-align:left;
     width:150px;
 }
