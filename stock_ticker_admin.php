@@ -366,16 +366,16 @@ function stock_ticker_create_ticker_config() {
         
         <br />
         <label for="input_max_display">Number of stocks displayed on the screen at one time: </label>
-        <input  id="input_max_display"  name="max_display"   type="text" value="<?php echo get_option('stock_ticker_display_number'); ?>" style="width:29px; font-size:14px; text-align:center" />
+        <input  id="input_max_display"  name="max_display"   type="text" value="<?php echo get_option('stock_ticker_display_number'); ?>" style="width:40px; font-size:14px; text-align:center" />
         <label for="input_scroll_speed">Scroll speed (Pixels per second): </label>
-        <input  id="input_scroll_speed" name="scroll_speed"  type="text" value="<?php echo get_option('stock_ticker_scroll_speed'); ?>"   style="width:36px; font-size:14px; text-align:center" />
+        <input  id="input_scroll_speed" name="scroll_speed"  type="text" value="<?php echo get_option('stock_ticker_scroll_speed'); ?>"   style="width:60px; font-size:14px; text-align:center" />
         
         <br />
         <label for="input_background_color">Background color: </label>
-        <input  id="input_background_color" name="background_color1"     type="text" value="<?php echo $current_colors[1]; ?>" style="width:70px" />
+        <input  id="input_background_color" name="background_color1"     type="text" value="<?php echo $current_colors[1]; ?>" style="width:101px" />
         <br />
         <label for="input_background_opacity">Background opacity (0-1): </label>
-        <input  id="input_background_opacity" name="background_opacity"  type="text" value="<?php echo $opacity_set[1]; ?>"    style="width:29px; font-size:14px; text-align:center" />
+        <input  id="input_background_opacity" name="background_opacity"  type="text" value="<?php echo $opacity_set[1]; ?>"    style="width:60px; font-size:14px; text-align:center" />
     <?php
 }
 
@@ -387,17 +387,18 @@ function stock_ticker_create_text_config() {
     $opacity_set   = get_option('stock_ticker_opacity');
     ?>
         <label for="input_text_color">Text color: </label>
-        <input  id="input_text_color" name="text_color"     type="text"  value="<?php echo $current_colors[0]; ?>" style="width:70px" />
+        <input  id="input_text_color" name="text_color"     type="text"  value="<?php echo $current_colors[0]; ?>" style="width:101px" />
+        
         
         <label for="input_font_size">Font size: </label>
-        <input  id="input_font_size" name="font_size"       type="text"  value="<?php echo $font_options[0]; ?>"   style="width:29px;  font-size:14px; text-align:center;" />
+        <input  id="input_font_size" name="font_size"       type="text"  value="<?php echo $font_options[0]; ?>"   style="width:40px;  font-size:14px; text-align:center;" />
         <br/>
         
         <label for="input_text_opacity">Text opacity (0-1): </label>
-        <input  id="input_text_opacity" name="text_opacity"  type="text" value="<?php echo $opacity_set[0]; ?>"    style="width:29px; font-size:14px; text-align:center" />
+        <input  id="input_text_opacity" name="text_opacity"  type="text" value="<?php echo $opacity_set[0]; ?>"    style="width:60px; font-size:14px; text-align:center" />
         
         <label for="input_font_family">Font family: </label>
-        <input  id="input_font_family" name="font_family" list="font_family" value="<?php echo $font_options[1]; ?>" autocomplete="on" style="width:70px" />
+        <input  id="input_font_family" name="font_family" list="font_family" value="<?php echo $font_options[1]; ?>" autocomplete="on" style="width:125px" />
         <datalist id="font_family"><!-- used as an "autocomplete dropdown" within the input text field -->
         <?php  //Any real reason to not use a regular dropdown instead?
             foreach($default_fonts as $font) {
@@ -430,7 +431,7 @@ function stock_ticker_create_template_field() {
     $all_settings = get_option('stock_ticker_default_settings');
     ?>
         <label for="input_default_settings">Template: </label>
-        <select id="input_default_settings" name="template" style="width:180px;">
+        <select id="input_default_settings" name="template" style="width:225px;">
         <option selected> ------- </option>
         <?php 
             foreach($all_settings as $key=>$setting){
