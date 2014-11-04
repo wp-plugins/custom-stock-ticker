@@ -26,12 +26,12 @@ Features:
  * Preview of Stock Ticker after saving on settings page
  * Acceptance of custom tickers with the use of an ID and shortcode specifications
 
+Requirements:
+
+ * PHP version >= 5.3.0
+ * Ability to execute wordpress shortcodes in the location(s) you want to place stocks. (see installation)
+
 This plugin was developed by Relevad Corporation. Authors: Artem Skorokhodov, Matthew Hively, and Boris Kletser.
-
-== Requirements == 
-
-PHP version >= 5.3.0
-Ability to execute wordpress shortcodes in the location you want to place stocks.
 
 == Installation ==
 
