@@ -1,6 +1,5 @@
 === Custom Stock Ticker ===
 Contributors: Relevad
-Donate link: http://svaca.com/
 Tags: stock ticker, stocks, ticker, stock market, stock price, share prices, market changes, trading, finance, financial
 Requires at least: 3.8.0
 Tested up to: 4.0

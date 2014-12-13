@@ -34,7 +34,9 @@ function stock_ticker($atts){ //attributes are whats include between the [] of t
     if (!is_admin() && !is_home()) {
         if (is_category()) { 
             $tmp = get_queried_object(); //gets the WP_query object for this page
-            $category_ids[] = $tmp->term_id;
+            if (is_object($tmp)) {
+                $category_ids[] = $tmp->term_id;
+            }
         }
         else {
             $tmp = get_the_category(); //get the list of all category objects for this post
@@ -71,10 +73,8 @@ function stock_ticker($atts){ //attributes are whats include between the [] of t
         return "<!-- WARNING: no stock list found for category: {$cats_used} -->";  //don't fail completely silently
     }
 
-    $size           = get_option('stock_ticker_display_size');
-    $color_settings = get_option('stock_ticker_color_scheme');   //0 = txt-color  1 = bg-color
-    $font_options   = get_option('stock_ticker_font_options');   //NOTE: not configurable via shortcode at this time
-    
+    $st_ds = get_option('stock_ticker_default_settings');
+
     //use value in shortcode, otherwise use defaults
     //Known Issue: IDs and attributes, each set of attributes should have a unique id specified by the user. Otherwise tickers may not display as intended
     extract( shortcode_atts( array( //we can use nulls for this, since defaults are part of the validation
@@ -93,14 +93,14 @@ function stock_ticker($atts){ //attributes are whats include between the [] of t
     //**********validation section***********
     global $stock_ticker_vp;
     //NOTE: for validation, if option supplied was invalid, use the "global" setting
-    $width        = stock_plugin_validate_integer($width,  $stock_ticker_vp['width'][0],  $stock_ticker_vp['width'][1],  $size[0]);
-    $height       = stock_plugin_validate_integer($height, $stock_ticker_vp['height'][0], $stock_ticker_vp['height'][1], $size[1]);
+    $width        = stock_plugin_validate_integer($width,  $stock_ticker_vp['width'][0],  $stock_ticker_vp['width'][1],  $st_ds['width']);
+    $height       = stock_plugin_validate_integer($height, $stock_ticker_vp['height'][0], $stock_ticker_vp['height'][1], $st_ds['height']);
     
-    $text_color   = stock_plugin_validate_color($text_color, $color_settings[0]);
-    $bgcolor      = stock_plugin_validate_color($bgcolor,    $color_settings[1]);
+    $text_color   = stock_plugin_validate_color($text_color, $st_ds['font_color']);
+    $bgcolor      = stock_plugin_validate_color($bgcolor,    $st_ds['bg_color']);
     
-    $scroll_speed = stock_plugin_validate_integer($scroll_speed,     $stock_ticker_vp['scroll_speed'][0], $stock_ticker_vp['scroll_speed'][1], get_option('stock_ticker_scroll_speed'));
-    $num_ticker_to_display = stock_plugin_validate_integer($display, $stock_ticker_vp['max_display'][0],  $stock_ticker_vp['max_display'][1],  get_option('stock_ticker_display_number'));
+    $scroll_speed = stock_plugin_validate_integer($scroll_speed,     $stock_ticker_vp['scroll_speed'][0], $stock_ticker_vp['scroll_speed'][1], $st_ds['scroll_speed']);
+    $num_ticker_to_display = stock_plugin_validate_integer($display, $stock_ticker_vp['max_display'][0],  $stock_ticker_vp['max_display'][1],  $st_ds['display_number']);
     //***********DONE validation*************
     
     //NOTE: To make scrolling smooth, we want the number of stocks to always be greater than the number to be displayed simultaniously on the page
@@ -112,28 +112,21 @@ function stock_ticker($atts){ //attributes are whats include between the [] of t
     
     //****** fix scaling *******
     //this section is to fix the width/height attributes so that incase the ticker would have had overlapping text, it fixes itself to a minimum acceptable level
-    $minimum_width = $font_options[0] * 4 * 4;  //point font * 4 characters * 4 elements ~ aproximate
-    $entry_width = max($minimum_width, $entry_width);
+    $minimum_width = $st_ds['font_size'] * 4 * 4;  //point font * 4 characters * 4 elements ~ aproximate
+    $entry_width = max($minimum_width, $entry_width); //NOTE: warning issued in admin config update options
     //****** end fix scaling ******* 
 
-    $output  = stock_ticker_create_css_header($id, $entry_width, $width, $height, $text_color, $bgcolor);
-    $output .= stock_ticker_create_ticker    ($id, $entry_width, $stock_data_list, $scroll_speed);
+    $output  = stock_ticker_create_css_header($id, $entry_width, $st_ds, $width, $height, $text_color, $bgcolor);
+    $output .= stock_ticker_create_ticker    ($id, $entry_width, $st_ds, $stock_data_list, $scroll_speed);
 
     return $output;
 }
 
 //Creates the internal style sheet for all of the various elements.
-function stock_ticker_create_css_header($id, $entry_width, $width, $height, $text_color, $bgcolor) {
-        $font_options    = get_option('stock_ticker_font_options');
-        $opacity_options = get_option('stock_ticker_opacity');
-        $display_data    = get_option('stock_ticker_data_display');
-        $advanced_style  = get_option('stock_ticker_advanced_style');
-
-        $text_opacity = $opacity_options[0];
-        //$back_opacity = $opacity_options[1]; //NOTE: background_opacity is zero here, so that fade-in has something to fade
+function stock_ticker_create_css_header($id, $entry_width, $st_ds, $width, $height, $text_color, $bgcolor) {
         
-        $number_of_values = array_sum($display_data);
-        if (get_option('stock_ticker_draw_triangle')) {
+        $number_of_values = array_sum($st_ds['data_display']);
+        if ($st_ds['draw_triangle'] == 1) {
                 $element_width = round(($entry_width - 20) / $number_of_values, 0, PHP_ROUND_HALF_DOWN);
         } else {
                 $element_width = round($entry_width / $number_of_values,        0, PHP_ROUND_HALF_DOWN);
@@ -143,7 +136,7 @@ function stock_ticker_create_css_header($id, $entry_width, $width, $height, $tex
         //NOTE: elements are pieces of an entry, EX.  ticker_name & price are each elements
         
         //QUESTION: do we want to not write to page the triangle or vertical line css rules portions unless config calls for it?
-        $triangle_size  = $font_options[0] - 4;                         //triangle should be smaller than standard text
+        $triangle_size  = $st_ds['font_size'] - 4;                         //triangle should be smaller than standard text
         $triangle_left_position = $entry_width - 10 - ($triangle_size); //the triangle doesn't need much space
         $triangle_top_position  = round(($height / 2) - ($triangle_size / 2), 0, PHP_ROUND_HALF_DOWN);     //center the triangle on the line
         
@@ -157,7 +150,7 @@ function stock_ticker_create_css_header($id, $entry_width, $width, $height, $tex
    width:            {$width}px;
    height:           {$height}px;
    background-color: {$bgcolor};
-   {$advanced_style}
+   {$st_ds['advanced_style']}
 }
 .stock_ticker_{$id} .stock_ticker_slider {
    width:  {$width}px;
@@ -170,9 +163,9 @@ function stock_ticker_create_css_header($id, $entry_width, $width, $height, $tex
    color:    ${text_color};
 }
 .stock_ticker_{$id} .stock_ticker_element {
-   opacity:     {$text_opacity};
-   font-size:   {$font_options[0]}px;
-   font-family: {$font_options[1]},serif;
+   opacity:     {$st_ds['text_opacity']};
+   font-size:   {$st_ds['font_size']}px;
+   font-family: {$st_ds['font_family']},serif;
    width:       {$element_width}px;
    height:      {$height}px;
    line-height: {$height}px;
@@ -201,21 +194,21 @@ HEREDOC;
 }
 
 /********** Creates the ticker html ***********/
-function stock_ticker_create_ticker($id, $entry_width, $data_list, $scroll_speed) {
+function stock_ticker_create_ticker($id, $entry_width, $st_ds, $data_list, $scroll_speed) {
         $left_position = 0;
         $stock_entries = '';
-        //$tmp = array
+
         foreach($data_list as $stock_data){ //throwing away the key, which in this case is stock symbol associated array
                 if($stock_data['last_val']=="0.00"){
                         continue;
                 }
                 $stock_entries .= "<div class='stock_ticker_entry' style='left: {$left_position}px;'><!-- \n -->";
-                $stock_entries .= stock_ticker_create_entry($stock_data); 
+                $stock_entries .= stock_ticker_create_entry($stock_data, $st_ds); 
                 $stock_entries .= "</div><!-- \n -->";
                 $left_position += $entry_width;
         }
 
-        $the_jquery =  stock_ticker_create_jquery($scroll_speed);
+        $the_jquery =  stock_ticker_create_jquery($scroll_speed, $st_ds);
 
         return <<<STC
                 <div class="stock_ticker stock_ticker_{$id}">
@@ -229,16 +222,15 @@ STC;
 }
 
 //NOTE: closest(div) may not be necessary
-function stock_ticker_create_jquery($scroll_speed){
-        $opacity_options = get_option('stock_ticker_opacity');
-        $back_opacity = $opacity_options[1];
+function stock_ticker_create_jquery($scroll_speed, $st_ds) {
+
         return <<<JQC
         <script type="text/javascript">
               var tmp = document.getElementsByTagName( 'script' );
               var thisScriptTag = tmp[ tmp.length - 1 ];
               var ticker_config = {
                     ticker_root:   jQuery(thisScriptTag).parent(),
-                    final_opacity: {$back_opacity},
+                    final_opacity: {$st_ds['bg_opacity']},
                     scroll_speed:  {$scroll_speed}
               };
               stock_ticker_start_js(ticker_config);
@@ -247,16 +239,15 @@ JQC;
 }
 
 //creates all the multiple elements to populate the entry
-function stock_ticker_create_entry($stock_data) {
+function stock_ticker_create_entry($stock_data, $st_ds) {
+
         $output = '';
         //set in stock_ticker_admin.php  
         //ordering:   market, symbol, last value, change value, change percentage, last trade
-        $display_data = get_option('stock_ticker_data_display', array(0,1,1,1,1,0));   //NOTE: even though this is static, leaving in place incase in future we want this configurable
-               
-        //enable_change_color, will allow change_value & percent_change to match the color of the triangle itself.
-        //all_change_color forces all of the element text to match triangle (including ticker symbol)
-        $color_change   = get_option('stock_ticker_enable_change_color');    //change the color positive & negative values
-        $change_all     = get_option('stock_ticker_all_change_color');       //change the color of the whole element for positive & negative values   this is hard-coded for certain preset themes (example CNBC), so then regular text color does not apply
+        $display_data = $st_ds['data_display'];
+     
+        $color_change = ($st_ds['change_color']     == 1 ? true : false);     //change the color positive & negative values
+        $change_all   = ($st_ds['change_color']     == 2 ? true : false);
         
         //custom font things for up/down/same values
         $color_class = 'gray'; //NOTE: this would ignore the default text color at all times if changeall is set
@@ -304,11 +295,11 @@ function stock_ticker_create_entry($stock_data) {
                 $output .= "<div class='stock_ticker_element {$text_color}'>{$data_item}%</div><!-- \n -->";
         }
         //creates the colorful triangle
-        if(get_option('stock_ticker_draw_triangle')){
+        if($st_ds['draw_triangle'] == 1) {
                 $output .= "<div class='stock_ticker_triangle {$color_class}'></div><!-- \n -->";
         }
         //creates the line after each entry.
-        if(get_option('stock_ticker_draw_vertical_lines')){
+        if($st_ds['draw_vertical_lines'] == 1) {
             $output .= "<div class='stock_ticker_vertical_line'></div><!-- \n -->";
         }
         
