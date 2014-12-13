@@ -3,7 +3,7 @@ Contributors: Relevad
 Tags: stock ticker, stocks, ticker, stock market, stock price, share prices, market changes, trading, finance, financial
 Requires at least: 3.8.0
 Tested up to: 4.0
-Stable tag: 1.2
+Stable tag: 1.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,11 +23,10 @@ Features:
  * CSS input for entire widget (allows for alignment, borders, margins, padding, etc.)
  * Custom stocks for specific categories
  * Preview of Stock Ticker after saving on settings page
- * Acceptance of custom tickers with the use of an ID and shortcode specifications
 
 Requirements:
 
- * PHP version >= 5.3.0
+ * PHP version >= 5.3.0 (experimental support for lower versions)
  * Ability to execute wordpress shortcodes in the location(s) you want to place stocks. (see installation)
 
 This plugin was developed by Relevad Corporation. Authors: Artem Skorokhodov, Matthew Hively, and Boris Kletser.
@@ -83,31 +82,15 @@ If you want to display a different set of stocks for specific categories on your
 
 = Can I place two tickers with different formatting on one page? =
 
+----Depricated support-----
 Yes, however if you want to place stock tickers with different formatting on a single page or if you think your site will ever display two different tickers on the same page, you must give each ticker its own ID in the shortcode. 
 
 For example: `[stock-ticker id="example_id_01" display="3" width="800" height="40" background_color="black" text_color="yellow" scroll_speed="60"]`
 
 
 = The ticker is too big! Is there some way to shrink it? =
-Yes. Put in a smaller number in the width under Ticker Settings (Settings->Stock Ticker). Width is in pixels. Alternatively you can enter a smaller width in the shortcode. 
+Yes. Put in a smaller number in the width under Ticker Settings (Settings->Stock Ticker). Width is in pixels. 
 
-For example: `[stock-ticker id="custom_ticker_01" width="280"]`
-
-
-= Where can I find all the options for customizing a shortcode outside of the input box UI?
-
-All shortcode options are in the Advanced example:
-`[stock-ticker id="example_id_01" display="3" width="700" height="40" background_color="black" text_color="yellow" scroll_speed="60"]`
-
-The options are:
-
-* id (name given to element *required)
-* display (number of stocks per screen)
-* width (pixels)
-* height (pixels)
-* background_color (hex)
-* text_color (hex)
-* scroll_speed (pixels/second)
 
 
 = Something's not working or I found a bug. What do I do? =
@@ -132,6 +115,14 @@ Email us at stock-ticker AT relevad DOT com or go to the support section of this
 
 == Changelog ==
 
+= 1.3 =
+
+* Added alternative csv parser for php < 5.3
+* Depricated shortcode parameters
+* Added warnings if text sizes + width would lead to overlap
+* Cleaned up data storage for plugin options
+* Misc minor code cleanups
+
 = 1.2 =
 
 * Updating to maintain compatability with custom-stock-widget changes
@@ -153,6 +144,6 @@ Plugin released.
 
 == Upgrade Notice ==
 
-= 1.1.1 =
+= 1.2 =
 
-Update to maintain compatability with our other plugins.
+Update to get latest fixes and stability improvements
