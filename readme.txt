@@ -3,7 +3,7 @@ Contributors: Relevad
 Tags: stock ticker, stocks, ticker, stock market, stock price, share prices, market changes, trading, finance, financial
 Requires at least: 3.8.0
 Tested up to: 4.1
-Stable tag: 1.3
+Stable tag: 1.3.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -115,6 +115,11 @@ Email us at stock-ticker AT relevad DOT com or go to the support section of this
 
 == Changelog ==
 
+= 1.3.1 =
+  
+* Added timeout to retreive stock data
+* Code reorganization
+
 = 1.3 =
 
 * Added alternative csv parser for php < 5.3
@@ -144,6 +149,6 @@ Plugin released.
 
 == Upgrade Notice ==
 
-= 1.2 =
+= 1.3 =
 
 Update to get latest fixes and stability improvements
