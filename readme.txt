@@ -2,8 +2,8 @@
 Contributors: Relevad
 Tags: stock ticker, stocks, ticker, stock market, stock price, share prices, market changes, trading, finance, financial
 Requires at least: 3.8.0
-Tested up to: 4.0
-Stable tag: 1.3
+Tested up to: 4.1
+Stable tag: 1.3.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -37,7 +37,7 @@ This plugin was developed by Relevad Corporation. Authors: Artem Skorokhodov, Ma
 
 1. Activate the Custom Stock Ticker plugin through the Plugins menu in WordPress
 
-1. Set Look and Stocks in Settings->StockTicker
+1. Configure appearance and Stocks symbols in "Relevad Plugins"->StockTicker
 
 1. Place Shortcodes
  * Pages / Posts: 
@@ -115,6 +115,11 @@ Email us at stock-ticker AT relevad DOT com or go to the support section of this
 
 == Changelog ==
 
+= 1.3.1 =
+  
+* Added timeout to retreive stock data
+* Code reorganization
+
 = 1.3 =
 
 * Added alternative csv parser for php < 5.3
@@ -144,6 +149,6 @@ Plugin released.
 
 == Upgrade Notice ==
 
-= 1.2 =
+= 1.3 =
 
 Update to get latest fixes and stability improvements

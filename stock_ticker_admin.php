@@ -5,7 +5,7 @@
     Plugin URI: http://relevad.com/wp-plugins/
     Description: Create customizable moving stock tickers that can be placed anywhere on a site using shortcodes.
     Author: Relevad
-    Version: 1.3
+    Version: 1.3.1
     Author URI: http://relevad.com/
 
 */
@@ -30,7 +30,11 @@
 // Feature Improvement: think about putting each individual config into a class, does that buy us anything?
 
 if (!defined('STOCK_PLUGIN_UTILS') ) {
-    include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_plugin_utils.php'; //contains validation functions
+    include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_plugin_utils.php'; //used to contain validation functions
+
+    if (!defined('RELEVAD_PLUGIN_UTILS')) {
+        include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/relevad_plugin_utils.php';
+    }
 }
 if (!defined('STOCK_PLUGIN_CACHE') ) {
     include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_plugin_cache.php';
@@ -86,7 +90,8 @@ if (get_option('stock_ticker_color_scheme')) { //this old option exists
 //*************************************************************************
 
 function stock_ticker_admin_enqueue($hook) {
-    if ($hook != 'settings_page_stock_ticker_admin') {return;} //do not run on other admin pages
+    //if ($hook != 'settings_page_stock_ticker_admin') {return;} //do not run on other admin pages
+    if ($hook != 'relevad-plugins_page_stock_ticker_admin') {return;} //do not run on other admin pages
     
     wp_register_style ('stock_plugin_admin_style', plugins_url('stock_plugin_admin_style.css', __FILE__));
     wp_register_script('stock_plugin_admin_script',plugins_url('stock_plugin_admin_script.js', __FILE__) , array( 'jquery' ), false, false);
@@ -100,8 +105,12 @@ add_action('admin_enqueue_scripts', 'stock_ticker_admin_enqueue');
 
 
 
-function stock_ticker_admin_actions(){
-    $hook = add_options_page('StockTicker', 'StockTicker', 'manage_options', 'stock_ticker_admin', 'stock_ticker_admin_page'); //wrapper for add_submenu_page specifically into "settings"
+function stock_ticker_admin_actions() {
+
+    relevad_plugin_add_menu_section(); //imported from relevad_plugin_utils.php
+
+    //$hook = add_options_page('StockTicker', 'StockTicker', 'manage_options', 'stock_ticker_admin', 'stock_ticker_admin_page'); //wrapper for add_submenu_page specifically into "settings"
+    $hook = add_submenu_page('relevad_plugins', 'StockTicker', 'StockTicker', 'manage_options', 'stock_ticker_admin', 'stock_ticker_admin_page');
     //add_submenu_page( 'options-general.php', $page_title, $menu_title, $capability, $menu_slug, $function ); // do not use __FILE__ for menu_slug
 }
 add_action('admin_menu', 'stock_ticker_admin_actions');
@@ -355,27 +364,27 @@ function stock_ticker_update_display_options() {
     //IN FUTURE: this will be replaced with AJAX and javascript validation
     
     //NOTE: stock_ticker_validate_integer($new_val, $min_val, $max_val, $default)
-    $tmp = stock_plugin_validate_integer($_POST['max_display'],  $stock_ticker_vp['max_display'][0],  $stock_ticker_vp['max_display'][1],  false);
+    $tmp = relevad_plugin_validate_integer($_POST['max_display'],  $stock_ticker_vp['max_display'][0],  $stock_ticker_vp['max_display'][1],  false);
     if ($tmp) {
     $st_ds_new['display_number'] = $tmp;}
     
-    $tmp = stock_plugin_validate_integer($_POST['scroll_speed'], $stock_ticker_vp['scroll_speed'][0], $stock_ticker_vp['scroll_speed'][1], false);
+    $tmp = relevad_plugin_validate_integer($_POST['scroll_speed'], $stock_ticker_vp['scroll_speed'][0], $stock_ticker_vp['scroll_speed'][1], false);
     if ($tmp) {
     $st_ds_new['scroll_speed']   = $tmp;}
     
-    $st_ds_new['width']  = stock_plugin_validate_integer($_POST['width'],       $stock_ticker_vp['width'][0],        $stock_ticker_vp['width'][1],   $st_ds['width']);
-    $st_ds_new['height'] = stock_plugin_validate_integer($_POST['height'],      $stock_ticker_vp['height'][0],       $stock_ticker_vp['height'][1],  $st_ds['height']);
+    $st_ds_new['width']  = relevad_plugin_validate_integer($_POST['width'],       $stock_ticker_vp['width'][0],        $stock_ticker_vp['width'][1],   $st_ds['width']);
+    $st_ds_new['height'] = relevad_plugin_validate_integer($_POST['height'],      $stock_ticker_vp['height'][0],       $stock_ticker_vp['height'][1],  $st_ds['height']);
     
     // VALIDATE fonts
-    $st_ds_new['font_size']   = stock_plugin_validate_integer($_POST['font_size'],   $stock_ticker_vp['font_size'][0], $stock_ticker_vp['font_size'][1],  $st_ds['font_size']);
-    $st_ds_new['font_family'] = stock_plugin_validate_font_family($_POST['font_family'], $st_ds['font_family']);
+    $st_ds_new['font_size']   = relevad_plugin_validate_integer($_POST['font_size'],   $stock_ticker_vp['font_size'][0], $stock_ticker_vp['font_size'][1],  $st_ds['font_size']);
+    $st_ds_new['font_family'] = relevad_plugin_validate_font_family($_POST['font_family'], $st_ds['font_family']);
     
     // VALIDATE COLORS
-    $st_ds_new['font_color'] = stock_plugin_validate_color($_POST['text_color'],        $st_ds['font_color']);
-    $st_ds_new['bg_color']   = stock_plugin_validate_color($_POST['background_color1'], $st_ds['bg_color']);
+    $st_ds_new['font_color'] = relevad_plugin_validate_color($_POST['text_color'],        $st_ds['font_color']);
+    $st_ds_new['bg_color']   = relevad_plugin_validate_color($_POST['background_color1'], $st_ds['bg_color']);
     
-    $st_ds_new['text_opacity'] = stock_plugin_validate_opacity($_POST['text_opacity'],       $st_ds['text_opacity']);
-    $st_ds_new['bg_opacity']   = stock_plugin_validate_opacity($_POST['background_opacity'], $st_ds['bg_opacity']);
+    $st_ds_new['text_opacity'] = relevad_plugin_validate_opacity($_POST['text_opacity'],       $st_ds['text_opacity']);
+    $st_ds_new['bg_opacity']   = relevad_plugin_validate_opacity($_POST['background_opacity'], $st_ds['bg_opacity']);
     
     $tmp = trim($_POST['ticker_advanced_style']); //strip spaces
     if (substr($tmp, -1) != ';') { $tmp .= ';'; } //poormans making of a css rule
