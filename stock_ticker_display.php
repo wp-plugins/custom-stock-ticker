@@ -93,14 +93,14 @@ function stock_ticker($atts){ //attributes are whats include between the [] of t
     //**********validation section***********
     global $stock_ticker_vp;
     //NOTE: for validation, if option supplied was invalid, use the "global" setting
-    $width        = stock_plugin_validate_integer($width,  $stock_ticker_vp['width'][0],  $stock_ticker_vp['width'][1],  $st_ds['width']);
-    $height       = stock_plugin_validate_integer($height, $stock_ticker_vp['height'][0], $stock_ticker_vp['height'][1], $st_ds['height']);
+    $width        = relevad_plugin_validate_integer($width,  $stock_ticker_vp['width'][0],  $stock_ticker_vp['width'][1],  $st_ds['width']);
+    $height       = relevad_plugin_validate_integer($height, $stock_ticker_vp['height'][0], $stock_ticker_vp['height'][1], $st_ds['height']);
     
-    $text_color   = stock_plugin_validate_color($text_color, $st_ds['font_color']);
-    $bgcolor      = stock_plugin_validate_color($bgcolor,    $st_ds['bg_color']);
+    $text_color   = relevad_plugin_validate_color($text_color, $st_ds['font_color']);
+    $bgcolor      = relevad_plugin_validate_color($bgcolor,    $st_ds['bg_color']);
     
-    $scroll_speed = stock_plugin_validate_integer($scroll_speed,     $stock_ticker_vp['scroll_speed'][0], $stock_ticker_vp['scroll_speed'][1], $st_ds['scroll_speed']);
-    $num_ticker_to_display = stock_plugin_validate_integer($display, $stock_ticker_vp['max_display'][0],  $stock_ticker_vp['max_display'][1],  $st_ds['display_number']);
+    $scroll_speed = relevad_plugin_validate_integer($scroll_speed,     $stock_ticker_vp['scroll_speed'][0], $stock_ticker_vp['scroll_speed'][1], $st_ds['scroll_speed']);
+    $num_ticker_to_display = relevad_plugin_validate_integer($display, $stock_ticker_vp['max_display'][0],  $stock_ticker_vp['max_display'][1],  $st_ds['display_number']);
     //***********DONE validation*************
     
     //NOTE: To make scrolling smooth, we want the number of stocks to always be greater than the number to be displayed simultaniously on the page
