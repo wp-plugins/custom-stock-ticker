@@ -154,5 +154,5 @@ Plugin released.
 == Upgrade Notice ==
 
 = 1.3 =
-
+ 
 Update to get latest fixes and stability improvements
