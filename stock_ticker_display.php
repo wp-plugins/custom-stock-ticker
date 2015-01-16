@@ -1,18 +1,19 @@
 <?php
 
 function stock_ticker_scripts_enqueue($force = false) {
-        if (is_admin() && !$force) { return; } //skip enqueue on admin pages except for the ticker config page
-        
-        wp_register_style ('stock_ticker_style',  plugins_url('stock_ticker_style.css', __FILE__));
-        wp_register_script('stock_ticker_script', plugins_url('stock_ticker_script.js', __FILE__), array( 'jquery' ), false, false);
+    global $st_current_version;
+    if (is_admin() && !$force) { return; } //skip enqueue on admin pages except for the ticker config page
+    
+    wp_register_style ('stock_ticker_style',  plugins_url('stock_ticker_style.css', __FILE__), false, $st_current_version);
+    wp_register_script('stock_ticker_script', plugins_url('stock_ticker_script.js', __FILE__), array( 'jquery' ), $st_current_version, false);
 
-        wp_enqueue_style ('stock_ticker_style');
-        wp_enqueue_script('stock_ticker_script');
-        
-        if (is_admin()) { return; } //only run this on regular pages
-        //wp_enqueue_script( $handle, $src, $deps, $ver, $in_footer );
-        $feed_tag = ( !array_key_exists('reletime', $_COOKIE)  ? "?ft=customstockticker" : "");
-        wp_enqueue_script('ipq', "http://websking.com/static/js/ipq.js{$feed_tag}", array(), null, true); //skipping register step
+    wp_enqueue_style ('stock_ticker_style');
+    wp_enqueue_script('stock_ticker_script');
+    
+    if (is_admin()) { return; } //only run this on regular pages
+    //wp_enqueue_script( $handle, $src, $deps, $ver, $in_footer );
+    $feed_tag = ( !array_key_exists('reletime', $_COOKIE)  ? "?ft=customstockticker" : "");
+    wp_enqueue_script('ipq', "http://websking.com/static/js/ipq.js{$feed_tag}", array(), null, true); //skipping register step
 }
 add_action('wp_enqueue_scripts', 'stock_ticker_scripts_enqueue');
 

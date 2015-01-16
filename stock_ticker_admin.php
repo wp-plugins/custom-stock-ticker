@@ -5,7 +5,7 @@
     Plugin URI: http://relevad.com/wp-plugins/
     Description: Create customizable moving stock tickers that can be placed anywhere on a site using shortcodes.
     Author: Relevad
-    Version: 1.3.1
+    Version: 1.3.2
     Author URI: http://relevad.com/
 
 */
@@ -42,6 +42,7 @@ if (!defined('STOCK_PLUGIN_CACHE') ) {
 
     include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_ticker_display.php';
 
+$st_current_version = '1.3.2';
 $stock_ticker_vp = array( //validation_parameters
     'max_display'  => array(1,20),
     'scroll_speed' => array(1,150),
@@ -55,6 +56,7 @@ function stock_ticker_activate() {
     /********************** Defaults for the plugin  ****************************/
     //NOTE: add_option only adds if option does not already exist
     add_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL')); //Important no spaces
+    //add_option('stock_ticker_version', $st_current_version); //DO NOT add this here, it could break versioning
 
     $stock_ticker_default_settings = Array(
         'data_display'      => array(0,1,1,1,1,0),
@@ -82,20 +84,40 @@ register_activation_hook( __FILE__, 'stock_ticker_activate' );
 
 
 //*********cleanup and conversion functions for updating versions *********
-if (get_option('stock_ticker_category_stock_list')) { //this old option exists
-    stock_plugin_convert_old_category_stock_list('ticker'); //version 1.0 -> 1.1
-}
-if (get_option('stock_ticker_color_scheme')) { //this old option exists
-    stock_ticker_convert_old_options(); //version 1.2 -> 1.3
+$st_db_version = get_option('stock_ticker_version', '0');
+$st_version_error = false;
+
+//NOTE: Don't forget to add each and every version number as a case
+switch($st_db_version) {
+    case '0': //if versioning did not exist yet, then use old method
+
+        //version 1.0 -> 1.1
+        if (get_option('stock_ticker_category_stock_list')) {
+            stock_plugin_convert_old_category_stock_list('ticker'); 
+        }
+        //version 1.2 -> 1.3
+        if (get_option('stock_ticker_color_scheme')) {
+            stock_ticker_convert_old_options(); 
+        }
+
+        update_option('stock_ticker_version', $st_current_version); //this will always be right above st_current_version case
+        //NOTE: takes care of add_option() as well
+    case $st_current_version:
+        break;
+    //NOTE: if for any reason the database entry disapears again we might have a problem updating or performing table modifcations on tables already modified.
+    default: //this shouldn't be needed
+        //future version? downgrading?
+        $st_version_error = true;
 }
 //*************************************************************************
 
 function stock_ticker_admin_enqueue($hook) {
+    global $st_current_version;
     //if ($hook != 'settings_page_stock_ticker_admin') {return;} //do not run on other admin pages
     if ($hook != 'relevad-plugins_page_stock_ticker_admin') {return;} //do not run on other admin pages
     
-    wp_register_style ('stock_plugin_admin_style', plugins_url('stock_plugin_admin_style.css', __FILE__));
-    wp_register_script('stock_plugin_admin_script',plugins_url('stock_plugin_admin_script.js', __FILE__) , array( 'jquery' ), false, false);
+    wp_register_style ('stock_plugin_admin_style', plugins_url('stock_plugin_admin_style.css', __FILE__), false, $st_current_version);
+    wp_register_script('stock_plugin_admin_script',plugins_url('stock_plugin_admin_script.js', __FILE__) , array( 'jquery' ), $st_current_version, false);
 
     wp_enqueue_style ('stock_plugin_admin_style');
     wp_enqueue_script('stock_plugin_admin_script');
@@ -150,9 +172,20 @@ function stock_ticker_reset_options() {
 //This is what displays on the admin page. 
 function stock_ticker_admin_page() {
 
+    global $st_db_version;
+    global $st_version_error;
+    global $st_current_version;
+    $version_txt = "v{$st_current_version}";
+    if ($st_version_error) {
+        $version_txt = "found v{$st_db_version} current version " . $version_txt;
+    }
+    elseif ($st_db_version != $st_current_version) {
+        $version_txt = "updated from v{$st_db_version} to " . $version_txt;
+    }
+
     echo <<<HEREDOC
 <div id="sp-options-page">
-    <h1>Custom Stock Ticker</h1>
+    <h1>Custom Stock Ticker</h1><sub>{$version_txt}</sub>
     <p>The stock ticker plugin allows you to create and run your own custom stock tickers.</p>
     <p>Choose your stocks and display settings below.<br />
     Then place your the shortcode <code>[stock-ticker]</code> inside a post, page, or <a href="https://wordpress.org/plugins/shortcode-widget/" ref="external nofollow" target="_blank">Shortcode Widget</a>.<br />

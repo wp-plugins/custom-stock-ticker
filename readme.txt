@@ -115,6 +115,10 @@ Email us at stock-ticker AT relevad DOT com or go to the support section of this
 
 == Changelog ==
 
+= 1.3.2 =
+
+* Added plugin database revision support
+
 = 1.3.1 =
   
 * Added timeout to retreive stock data
