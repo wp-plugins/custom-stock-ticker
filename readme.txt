@@ -3,7 +3,7 @@ Contributors: Relevad
 Tags: stock ticker, stocks, ticker, stock market, stock price, share prices, market changes, trading, finance, financial
 Requires at least: 3.8.0
 Tested up to: 4.1
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -114,6 +114,10 @@ Email us at stock-ticker AT relevad DOT com or go to the support section of this
 
 
 == Changelog ==
+
+= 1.3.3 =
+
+* minor UI bugfix for 1.3.2
 
 = 1.3.2 =
 

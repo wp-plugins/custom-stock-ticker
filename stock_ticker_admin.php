@@ -5,7 +5,7 @@
     Plugin URI: http://relevad.com/wp-plugins/
     Description: Create customizable moving stock tickers that can be placed anywhere on a site using shortcodes.
     Author: Relevad
-    Version: 1.3.2
+    Version: 1.3.3
     Author URI: http://relevad.com/
 
 */
@@ -42,7 +42,7 @@ if (!defined('STOCK_PLUGIN_CACHE') ) {
 
     include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_ticker_display.php';
 
-$st_current_version = '1.3.2';
+$st_current_version = '1.3.3';
 $stock_ticker_vp = array( //validation_parameters
     'max_display'  => array(1,20),
     'scroll_speed' => array(1,150),
@@ -85,7 +85,6 @@ register_activation_hook( __FILE__, 'stock_ticker_activate' );
 
 //*********cleanup and conversion functions for updating versions *********
 $st_db_version = get_option('stock_ticker_version', '0');
-$st_version_error = false;
 
 //NOTE: Don't forget to add each and every version number as a case
 switch($st_db_version) {
@@ -100,14 +99,17 @@ switch($st_db_version) {
             stock_ticker_convert_old_options(); 
         }
 
+    case '1.3.2':
         update_option('stock_ticker_version', $st_current_version); //this will always be right above st_current_version case
+        update_option('stock_ticker_version_text', " updated from v{$st_db_version} to"); //keep these 2 updates paired
         //NOTE: takes care of add_option() as well
     case $st_current_version:
         break;
     //NOTE: if for any reason the database entry disapears again we might have a problem updating or performing table modifcations on tables already modified.
     default: //this shouldn't be needed
         //future version? downgrading?
-        $st_version_error = true;
+        update_option('stock_ticker_version_text', " found v{$st_db_version} current version");
+        break;
 }
 //*************************************************************************
 
@@ -132,8 +134,6 @@ function stock_ticker_admin_actions() {
     
     relevad_plugin_add_menu_section(); //imported from relevad_plugin_utils.php
     
-    //TODO: fix this to go to the management page. the old function stock_widget_admin_page() is for editing default settings only -- rename as appropriate
-    //TODO: there should be a new page for managing all of the saved widgets/tickers and "+add widget/ticker" and "edit default widget/ticker"  as well as standard edit/delete widget/tickers
     //$hook = add_options_page('StockTicker', 'StockTicker', 'manage_options', 'stock_ticker_admin', 'stock_ticker_admin_page'); //wrapper for add_submenu_page specifically into "settings"
     $hook = add_submenu_page('relevad_plugins', 'StockTicker', 'StockTicker', 'manage_options', 'stock_ticker_admin', 'stock_ticker_admin_page'); 
     //add_submenu_page( 'options-general.php', $page_title, $menu_title, $capability, $menu_slug, $function ); // do not use __FILE__ for menu_slug
@@ -171,18 +171,10 @@ function stock_ticker_reset_options() {
 
 //This is what displays on the admin page. 
 function stock_ticker_admin_page() {
-
-    global $st_db_version;
-    global $st_version_error;
     global $st_current_version;
-    $version_txt = "v{$st_current_version}";
-    if ($st_version_error) {
-        $version_txt = "found v{$st_db_version} current version " . $version_txt;
-    }
-    elseif ($st_db_version != $st_current_version) {
-        $version_txt = "updated from v{$st_db_version} to " . $version_txt;
-    }
-
+    $version_txt = get_option('stock_ticker_version_text', '') . " v{$st_current_version}";
+    update_option('stock_ticker_version_text', ''); //clear the option after we display it once
+    
     echo <<<HEREDOC
 <div id="sp-options-page">
     <h1>Custom Stock Ticker</h1><sub>{$version_txt}</sub>
