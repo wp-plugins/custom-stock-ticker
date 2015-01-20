@@ -447,28 +447,38 @@ function stock_ticker_create_ticker_config($st_ds) {
         <br />
         <label for="input_background_color">Background color: </label>
         <input  id="input_background_color" name="background_color1"     type="text" value="<?php echo $st_ds['bg_color']; ?>" class="itxt" style="width:101px" />
-        <sup><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" class="color_q">[?]</a></sup>
+        <sup id="background_color_picker_help"><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" class="color_q">[?]</a></sup>
+		<script>enhanceTypeColor("input_background_color", "background_color_picker_help");</script>
         <br />
-        <label for="input_background_opacity">Background opacity (0-1): </label>
-        <input  id="input_background_opacity" name="background_opacity"  type="text" value="<?php echo $st_ds['bg_opacity']; ?>" class="itxt"/>
+       	<label for="input_background_opacity">Background opacity<span id="background_opacity_val0"> (0-1)</span>: </label>
+        <span id="background_opacity_val1"></span>
+		<input  id="input_background_opacity" name="background_opacity"  type="text" value="<?php echo $st_ds['bg_opacity']; ?>" class="itxt"/>
+		<span id="background_opacity_val2"></span>
+		<script>enhanceTypeRange("input_background_opacity", "background_opacity_val");</script> 
     <?php
 }
 
 function stock_ticker_create_text_config($st_ds) {
-    $default_fonts = array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "serif", "Times");
+	    $default_fonts = array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "serif", "Times");
     ?>
         <label for="input_text_color">Text color: </label>
         <input  id="input_text_color" name="text_color"     type="text"  value="<?php echo $st_ds['font_color']; ?>" class="itxt" style="width:101px" />
-    <sup><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" class="color_q">[?]</a></sup>
-        
+    <sup id="text_color_picker_help"><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" class="color_q">[?]</a></sup>
+		
+		<script>enhanceTypeColor("input_text_color", "text_color_picker_help");</script>
         
         <label for="input_font_size">Font size: </label>
         <input  id="input_font_size" name="font_size"       type="text"  value="<?php echo $st_ds['font_size']; ?>" class="itxt"   style="width:40px;" />
         <br/>
         
-        <label for="input_text_opacity">Text opacity (0-1): </label>
+        <label for="input_text_opacity">Text opacity<span id="text_opacity_val0"> (0-1)</span>: </label>
+		<span id="text_opacity_val1"></span>
         <input  id="input_text_opacity" name="text_opacity"  type="text" value="<?php echo $st_ds['text_opacity']; ?>" class="itxt"/>
-        
+		<span id="text_opacity_val2"></span>
+		
+		<script>enhanceTypeRange("input_text_opacity", "text_opacity_val");</script> 
+		
+        <br/>
         <label for="input_font_family">Font family: </label>
         <input  id="input_font_family" name="font_family" list="font_family" value="<?php echo $st_ds['font_family']; ?>" autocomplete="on" style="width:125px" />
         <datalist id="font_family"><!-- used as an "autocomplete dropdown" within the input text field -->
