@@ -446,7 +446,7 @@ function stock_ticker_create_ticker_config($st_ds) {
         
         <br />
         <label for="input_background_color">Background color: </label>
-        <input  id="input_background_color" name="background_color1"     type="text" value="<?php echo $st_ds['bg_color']; ?>" class="itxt" style="width:101px" />
+        <input  id="input_background_color" name="background_color1"     type="text" value="<?php echo $st_ds['bg_color']; ?>" class="itxt color_input" style="width:101px" />
         <sup id="background_color_picker_help"><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" class="color_q">[?]</a></sup>
 		<script>enhanceTypeColor("input_background_color", "background_color_picker_help");</script>
         <br />
@@ -462,7 +462,7 @@ function stock_ticker_create_text_config($st_ds) {
 	    $default_fonts = array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "serif", "Times");
     ?>
         <label for="input_text_color">Text color: </label>
-        <input  id="input_text_color" name="text_color"     type="text"  value="<?php echo $st_ds['font_color']; ?>" class="itxt" style="width:101px" />
+        <input  id="input_text_color" name="text_color"     type="text"  value="<?php echo $st_ds['font_color']; ?>" class="itxt color_input" style="width:101px" />
     <sup id="text_color_picker_help"><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" class="color_q">[?]</a></sup>
 		
 		<script>enhanceTypeColor("input_text_color", "text_color_picker_help");</script>

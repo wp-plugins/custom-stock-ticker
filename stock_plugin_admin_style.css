@@ -126,10 +126,6 @@ h3.hndle {
     border:1px solid black;
 }
 
-#input_text_color{
-	padding: 2px;
-}
-	
-#input_background_color{
+input.color_input{
 	padding: 2px;
 }
