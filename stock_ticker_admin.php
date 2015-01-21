@@ -5,7 +5,7 @@
     Plugin URI: http://relevad.com/wp-plugins/
     Description: Create customizable moving stock tickers that can be placed anywhere on a site using shortcodes.
     Author: Relevad
-    Version: 1.3.3
+    Version: 1.3.4
     Author URI: http://relevad.com/
 
 */
@@ -42,7 +42,7 @@ if (!defined('STOCK_PLUGIN_CACHE') ) {
 
     include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_ticker_display.php';
 
-$st_current_version = '1.3.3';
+$st_current_version = '1.3.4';
 $stock_ticker_vp = array( //validation_parameters
     'max_display'  => array(1,20),
     'scroll_speed' => array(1,150),
@@ -100,6 +100,7 @@ switch($st_db_version) {
         }
 
     case '1.3.2':
+    case '1.3.3':
         update_option('stock_ticker_version', $st_current_version); //this will always be right above st_current_version case
         update_option('stock_ticker_version_text', " updated from v{$st_db_version} to"); //keep these 2 updates paired
         //NOTE: takes care of add_option() as well
