@@ -5,7 +5,7 @@
     Plugin URI: http://relevad.com/wp-plugins/
     Description: Create customizable moving stock tickers that can be placed anywhere on a site using shortcodes.
     Author: Relevad
-    Version: 1.3.4
+    Version: 1.3.5
     Author URI: http://relevad.com/
 
 */
@@ -42,7 +42,7 @@ if (!defined('STOCK_PLUGIN_CACHE') ) {
 
     include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_ticker_display.php';
 
-$st_current_version = '1.3.4';
+$st_current_version = '1.3.5';
 $stock_ticker_vp = array( //validation_parameters
     'max_display'  => array(1,20),
     'scroll_speed' => array(1,150),
@@ -101,6 +101,7 @@ switch($st_db_version) {
 
     case '1.3.2':
     case '1.3.3':
+	case '1.3.4':
         update_option('stock_ticker_version', $st_current_version); //this will always be right above st_current_version case
         update_option('stock_ticker_version_text', " updated from v{$st_db_version} to"); //keep these 2 updates paired
         //NOTE: takes care of add_option() as well
@@ -215,6 +216,18 @@ HEREDOC;
 }//End Stock_ticker_admin_page
 
 
+//reads cookie for whether options sections were open or closed, displays accordingly
+function stock_ticker_cookie_helper($subsection) {
+	echo "<div class='section_toggle' id='stsec[$subsection]'>";
+	if ($_COOKIE['stsec'][$subsection] == "none") {
+		echo "+</div>";
+	} else {
+		echo "-</div>";
+	}
+	echo "<div class='section-options-display' style='display:".$_COOKIE['stsec'][$subsection]."';>";
+          
+}
+
 //Creates the entire options page. Useful for formatting.
 function stock_ticker_create_display_options() {
     $st_ds = get_option('stock_ticker_default_settings');
@@ -226,30 +239,26 @@ function stock_ticker_create_display_options() {
                         <div class='inside'>";
                             stock_ticker_create_template_field();
         echo "              <div class='sp-options-subsection'>
-                                <h4>Ticker Config</h4>
-                                <div class='section_toggle'>+</div>
-                                <div class='section-options-display'>";
-                                    stock_ticker_create_ticker_config($st_ds); //FOR FUTURE: add in a color swatch of some sort
+                                <h4>Ticker Config</h4>";
+                                stock_ticker_cookie_helper(0);
+                                    stock_ticker_create_ticker_config($st_ds); 
         echo "                  </div>
                             </div>
                             <div class='sp-options-subsection'>
-                                <h4>Text Config</h4>
-                                <div class='section_toggle'>+</div>
-                                <div class='section-options-display'>";
+                                <h4>Text Config</h4>";
+                                stock_ticker_cookie_helper(1);
                                     stock_ticker_create_text_config($st_ds);
         echo "                  </div>
                             </div>
                             <div class='sp-options-subsection'>
-                                <h4>Stock Display Config</h4>
-                                <div class='section_toggle'>+</div>
-                                <div class='section-options-display'>";
+                                <h4>Stock Display Config</h4>";
+                                stock_ticker_cookie_helper(2);
                                     stock_ticker_create_display_config($st_ds);
         echo "                  </div>
                             </div>
                             <div class='sp-options-subsection'>
-                                <h4>Advanced Styling</h4>
-                                <div class='section_toggle'>+</div>
-                                <div class='section-options-display'>";
+                                <h4>Advanced Styling</h4>";
+                                stock_ticker_cookie_helper(3);
                                     stock_ticker_create_style_field($st_ds);
         echo "                  </div>
                             </div>
