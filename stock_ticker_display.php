@@ -251,13 +251,13 @@ function stock_ticker_create_entry($stock_data, $st_ds) {
         $change_all   = ($st_ds['change_color']     == 2 ? true : false);
         
         //custom font things for up/down/same values
-        $color_class = 'gray'; //NOTE: this would ignore the default text color at all times if changeall is set
+        $color_class = 'st_gray'; //NOTE: this would ignore the default text color at all times if changeall is set
         $text_plus   = ''; // + sign only if positive value
         if($stock_data['change_val'] > 0){  //using also for the triangles
-            $color_class = 'green';
+            $color_class = 'st_green';
             $text_plus = '+';
         } elseif($stock_data['change_val'] < 0){
-            $color_class = 'red';
+            $color_class = 'st_red';
         }
         
         //index 0 represents market -- not used

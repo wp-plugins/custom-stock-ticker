@@ -36,17 +36,17 @@
 	left: 5px;
  }
 
-.stock_ticker_triangle.gray {
+.stock_ticker_triangle.st_gray {
     display: none;
 }
 
-.stock_ticker .red {
+.stock_ticker .st_red {
 color: red;
 }
-.stock_ticker .green {
+.stock_ticker .st_green {
 color: green;
 }
-.stock_ticker .gray {
+.stock_ticker .st_gray {
 color: gray;
 }
 
