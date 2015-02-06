@@ -14,6 +14,20 @@ function stock_plugin_create_category_stock_list($id, $stocks_string) { //this i
 LABEL;
 }
 
+function stock_plugin_cookie_helper($subsection, $plugin_type) {
+	//if (!isset ($_COOKIE['{$plugin_type}sec'][$subsection])) setcookie("{$plugin_type}sec[$subsection]", 'none');
+	$the_cookie = (isset ($_COOKIE["{$plugin_type}sec"][$subsection]) ? $_COOKIE["{$plugin_type}sec"][$subsection] : 'none');
+	echo "<div class='section_toggle' id='{$plugin_type}sec[$subsection]'>";
+	if ($the_cookie == "none") {
+		echo "+</div>";
+	} else {
+		echo "-</div>";
+	}
+	echo "<div class='section-options-display' style='display:".$the_cookie."';>";
+}
+
+
+
 //Generates the html input lines for the list of stocks in each category
 function stock_plugin_create_per_category_stock_lists($plugin_type) { //plugin_type = widget/ticker
     
@@ -26,15 +40,15 @@ function stock_plugin_create_per_category_stock_lists($plugin_type) { //plugin_t
         echo "<br/><span style='font-weight:bold;'>WARNING:</span><br/>If Default is blank, Stock {$plugin_type}s on pages without categories will be disabled.<br/>";
     }
     
+		
     $category_terms = get_terms('category');
     if (count($category_terms)) { //NOTE: this may display without any categories below IF and only if there is only the uncategorized category
-        echo "<h4 style='display:inline-block;'>Customize Categories</h4><div id='category_toggle' class='section_toggle'>+</div>
-              <div class='section-options-display'>
-              
-                <p><b>Optional:</b><br />
-                Use this section to display specific stocks for posts/pages in specific categories.<br />
-                If a post belongs to multiple categories, the plugin will merge the stocks specified for those categories.<br />
-                If you leave a field blank, the category will use the default stock list specified above.</p>";
+        echo "<h4 style='display:inline-block;'>Customize Categories</h4>";
+				stock_plugin_cookie_helper(0, $plugin_type);
+					echo "<p><b>Optional:</b><br />
+					Use this section to display specific stocks for posts/pages in specific categories.<br />
+					If a post belongs to multiple categories, the plugin will merge the stocks specified for those categories.<br />
+					If you leave a field blank, the category will use the default stock list specified above.</p>";
         
         foreach ($category_terms as $term) {
             if ($term->slug == 'uncategorized') { continue; }

@@ -216,17 +216,6 @@ HEREDOC;
 }//End Stock_ticker_admin_page
 
 
-//reads cookie for whether options sections were open or closed, displays accordingly
-function stock_ticker_cookie_helper($subsection) {
-	echo "<div class='section_toggle' id='stsec[$subsection]'>";
-	if ($_COOKIE['stsec'][$subsection] == "none") {
-		echo "+</div>";
-	} else {
-		echo "-</div>";
-	}
-	echo "<div class='section-options-display' style='display:".$_COOKIE['stsec'][$subsection]."';>";
-          
-}
 
 //Creates the entire options page. Useful for formatting.
 function stock_ticker_create_display_options() {
@@ -240,25 +229,25 @@ function stock_ticker_create_display_options() {
                             stock_ticker_create_template_field();
         echo "              <div class='sp-options-subsection'>
                                 <h4>Ticker Config</h4>";
-                                stock_ticker_cookie_helper(0);
+                                stock_plugin_cookie_helper(1, 'ticker');
                                     stock_ticker_create_ticker_config($st_ds); 
         echo "                  </div>
                             </div>
                             <div class='sp-options-subsection'>
                                 <h4>Text Config</h4>";
-                                stock_ticker_cookie_helper(1);
+                                stock_plugin_cookie_helper(2, 'ticker');
                                     stock_ticker_create_text_config($st_ds);
         echo "                  </div>
                             </div>
                             <div class='sp-options-subsection'>
                                 <h4>Stock Display Config</h4>";
-                                stock_ticker_cookie_helper(2);
+                                stock_plugin_cookie_helper(3, 'ticker');
                                     stock_ticker_create_display_config($st_ds);
         echo "                  </div>
                             </div>
                             <div class='sp-options-subsection'>
                                 <h4>Advanced Styling</h4>";
-                                stock_ticker_cookie_helper(3);
+                                stock_plugin_cookie_helper(4, 'ticker');
                                     stock_ticker_create_style_field($st_ds);
         echo "                  </div>
                             </div>
