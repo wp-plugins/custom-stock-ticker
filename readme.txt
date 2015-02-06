@@ -116,7 +116,7 @@ Email us at stock-ticker AT relevad DOT com or go to the support section of this
 
 == Changelog ==
 
-= 1.3.5b=
+= 1.3.5b =
 
 * Bugfix with UI
 
