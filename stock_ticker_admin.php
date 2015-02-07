@@ -1,11 +1,10 @@
 <?php
-
 /*
     Plugin Name: Custom Stock Ticker
     Plugin URI: http://relevad.com/wp-plugins/
     Description: Create customizable moving stock tickers that can be placed anywhere on a site using shortcodes.
     Author: Relevad
-    Version: 1.3.5b
+    Version: 1.4
     Author URI: http://relevad.com/
 
 */
@@ -26,155 +25,203 @@
     along with this program; if not, write to the Free Software 
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 */
+namespace stockTicker;
+define(__NAMESPACE__ . '\NS', __NAMESPACE__ . '\\');
 
-// Feature Improvement: think about putting each individual config into a class, does that buy us anything?
+global $wpdb;
+global $st_global;
+$st_global = new \stdClass();
+$st_global->table_name = $wpdb->prefix . 'stock_tickers';
+$st_global->charset    = $wpdb->get_charset_collate(); //requires WP v3.5
 
-if (!defined('STOCK_PLUGIN_UTILS') ) {
-    include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_plugin_utils.php'; //used to contain validation functions
-    
-    if (!defined('RELEVAD_PLUGIN_UTILS')) {
-        include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/relevad_plugin_utils.php';
-    }
-}
-if (!defined('STOCK_PLUGIN_CACHE') ) {
-    include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_plugin_cache.php';
-}
-
-    include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_ticker_display.php';
-
-$st_current_version = '1.3.5';
-$stock_ticker_vp = array( //validation_parameters
+$st_global->current_version   = '1.4'; //NOTE: should always match Version: ### in the plugin special comment
+$st_global->validation_params = array( //validation_parameters
     'max_display'  => array(1,20),
     'scroll_speed' => array(1,150),
     'width'        => array(200,2000),
     'height'       => array(10,100),
     'font_size'    => array(5,32)
 );
+//using this we might be able to reduce the number of variables passed around between functions
 
-function stock_ticker_activate() {
+// Feature Improvement: think about putting each individual config into a class, does that buy us anything?
+// http://stackoverflow.com/questions/1957732/can-i-include-code-into-a-php-class
 
-    /********************** Defaults for the plugin  ****************************/
-    //NOTE: add_option only adds if option does not already exist
-    add_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL')); //Important no spaces
-    //add_option('stock_ticker_version', $st_current_version); //DO NOT add this here, it could break versioning
+include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_plugin_utils.php'; //used to contain validation functions
+include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/relevad_plugin_utils.php';
+include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_plugin_cache.php';
+include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_ticker_display.php';
 
-    $stock_ticker_default_settings = Array(
-        'data_display'      => array(0,1,1,1,1,0),
-        //'default_market'    => 'DOW',
-        //'display_options_strings' => array("Market", "Symbol", "Last value", "Change value", "Change percentage", "Last trade"),
-        'font_color'        => '#5DFC0A', 
-        'bg_color'          => 'black',
-        'text_opacity'      => 1,
-        'bg_opacity'        => 1, 
-        'width'             => 400,
-        'height'            => 20,
-        'font_size'         => 12,
-        'font_family'       => 'Arial',
-        'scroll_speed'      => 60,
-        'display_number'    => 2,
-        'advanced_style'    => 'margin:auto;',
-        'draw_vertical_lines' => true,
-        'draw_triangle'     => true,
-        'change_color'      => 1 //0-none 1-some 2-all
-        );
-    add_option('stock_ticker_default_settings', $stock_ticker_default_settings); //one option to rule them all
+function stock_ticker_create_db_table() {  //NOTE: for brevity into a function
+    global $st_global;
+    
+    //NOTE: later may want: 'default_market'    => 'DOW',   'display_options_strings' 
+    $sql = "CREATE TABLE {$st_global->table_name} (
+    id                      mediumint(9)                    NOT NULL AUTO_INCREMENT,
+    name                    varchar(50)  DEFAULT ''         NOT NULL ,
+    bg_color                varchar(7)   DEFAULT '#000000'  NOT NULL,
+    font_color              varchar(7)   DEFAULT '#5DFC0A'  NOT NULL,
+    font_family             varchar(20)  DEFAULT 'Arial'    NOT NULL,
+    font_size               tinyint(3)   DEFAULT 12         NOT NULL,
+    width                   smallint(4)  DEFAULT 400        NOT NULL,
+    height                  smallint(4)  DEFAULT 20         NOT NULL,
+    scroll_speed            smallint(4)  DEFAULT 60         NOT NULL,
+    data_display            tinyint(2)   DEFAULT 30         NOT NULL,
+    text_opacity            float(5,4)   DEFAULT 1          NOT NULL,
+    bg_opacity              float(5,4)   DEFAULT 1          NOT NULL,
+    display_number          tinyint(3)   DEFAULT 2          NOT NULL,
+    draw_vertical_lines     tinyint(1)   DEFAULT 1          NOT NULL,
+    draw_triangle           tinyint(1)   DEFAULT 1          NOT NULL,
+    change_color            tinyint(1)   DEFAULT 1          NOT NULL,
+    stock_list              text         NOT NULL,
+    advanced_style          text         NOT NULL,
+    UNIQUE KEY (name),
+    PRIMARY KEY (id)
+    ) {$st_global->charset};";
+    
+    //NOTE: Extra spaces for readability screw up dbDelta, so we remove those
+    $sql = preg_replace('/ +/', ' ', $sql);
+    //NOTE: WE NEED 2 spaces exactly between PRIMARY KEY and its definition.
+    $sql = str_replace('PRIMARY KEY', 'PRIMARY KEY ', $sql);
+    
+    require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+    dbDelta( $sql ); //this will return an array saying what was done, if we want to output it
 }
 
-register_activation_hook( __FILE__, 'stock_ticker_activate' );
+function stock_ticker_activate() {
+    global $st_global;
+
+    if (!get_option('stock_ticker_category_stock_list') && !get_option('stock_ticker_per_category_stock_lists')) {
+        //if neither of these exist then assume initial install
+        stock_ticker_create_db_table();
+        $values = array( //NOTE: the rest should all be the defaults
+                        'name'           => 'Default Settings',
+                        'advanced_style' => 'margin: auto;'
+                        );
+        sp_add_row($st_global->table_name, $values);
+        add_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL'));
+        add_option('stock_ticker_version',                         $st_global->current_version);
+        add_option('stock_ticker_version_text', "Initial install v{$st_global->current_version}");
+    }
+}
+register_activation_hook( __FILE__, NS.'stock_ticker_activate' );
 
 
 //*********cleanup and conversion functions for updating versions *********
-$st_db_version = get_option('stock_ticker_version', '0');
+function stock_ticker_handle_update() {
+    global $st_global;
+    $db_version = get_option('stock_ticker_version', '0');
 
-//NOTE: Don't forget to add each and every version number as a case
-switch($st_db_version) {
-    case '0': //if versioning did not exist yet, then use old method
+    //NOTE: Don't forget to add each and every version number as a case
+    switch($db_version) {
+        case '0': //if versioning did not exist yet, then use old method
+            //version 1.0 -> 1.1
+            if (get_option('stock_ticker_category_stock_list')) {
+                stock_plugin_convert_old_category_stock_list('ticker'); 
+            }
+            //version 1.2 -> 1.3
+            if (get_option('stock_ticker_color_scheme')) {
+                stock_ticker_convert_old_options(); 
+            }
 
-        //version 1.0 -> 1.1
-        if (get_option('stock_ticker_category_stock_list')) {
-            stock_plugin_convert_old_category_stock_list('ticker'); 
-        }
-        //version 1.2 -> 1.3
-        if (get_option('stock_ticker_color_scheme')) {
-            stock_ticker_convert_old_options(); 
-        }
-
-    case '1.3.2':
-    case '1.3.3':
-	case '1.3.4':
-        update_option('stock_ticker_version', $st_current_version); //this will always be right above st_current_version case
-        update_option('stock_ticker_version_text', " updated from v{$st_db_version} to"); //keep these 2 updates paired
-        //NOTE: takes care of add_option() as well
-    case $st_current_version:
-        break;
-    //NOTE: if for any reason the database entry disapears again we might have a problem updating or performing table modifcations on tables already modified.
-    default: //this shouldn't be needed
-        //future version? downgrading?
-        update_option('stock_ticker_version_text', " found v{$st_db_version} current version");
-        break;
+        case '1.3.2': //Added this versioning system in this version
+        case '1.3.3':
+        case '1.3.4':
+        case '1.3.5':
+            stock_ticker_create_db_table(); //this should only be called once if needed
+            $default_settings = get_option('stock_ticker_default_settings', false);
+            if ($default_settings === false) { //if no other version existed
+                $values = array( //NOTE: the rest should all be the defaults
+                        'name'           => 'Default Settings',
+                        'advanced_style' => 'margin: auto;'
+                        );
+                sp_add_row($st_global->table_name, $values);
+            }
+            else {
+                $default_settings['name'] = 'Default Settings';
+                sp_add_row($st_global->table_name, $default_settings);
+                delete_option('stock_ticker_default_settings');
+            }
+            
+            //*****************************************************
+            //this will always be right above st_global->current_version case
+            //keep these 2 updates paired
+            update_option('stock_ticker_version',      $st_global->current_version);
+            update_option('stock_ticker_version_text', " updated from v{$db_version} to");
+            //NOTE: takes care of add_option() as well
+        case $st_global->current_version:
+            break;
+        //NOTE: if for any reason the database entry disapears again we might have a problem updating or performing table modifcations on tables already modified.
+        default: //this shouldn't be needed
+            //future version? downgrading?
+            update_option('stock_ticker_version_text', " found v{$db_version} current version");
+            break;
+    }
 }
 //*************************************************************************
 
 function stock_ticker_admin_enqueue($hook) {
-    global $st_current_version;
-    //if ($hook != 'settings_page_stock_ticker_admin') {return;} //do not run on other admin pages
+    global $st_global;
+
     if ($hook != 'relevad-plugins_page_stock_ticker_admin') {return;} //do not run on other admin pages
     
-    wp_register_style ('stock_plugin_admin_style', plugins_url('stock_plugin_admin_style.css', __FILE__), false, $st_current_version);
-    wp_register_script('stock_plugin_admin_script',plugins_url('stock_plugin_admin_script.js', __FILE__) , array( 'jquery' ), $st_current_version, false);
+    wp_register_style ('stock_plugin_admin_style',  plugins_url('stock_plugin_admin_style.css', __FILE__), false,             $st_global->current_version);
+    wp_register_script('stock_plugin_admin_script', plugins_url('stock_plugin_admin_script.js', __FILE__), array( 'jquery' ), $st_global->current_version, false);
 
     wp_enqueue_style ('stock_plugin_admin_style');
     wp_enqueue_script('stock_plugin_admin_script');
     
     stock_ticker_scripts_enqueue(true); //we also need these scripts
 }
-add_action('admin_enqueue_scripts', 'stock_ticker_admin_enqueue');
-
-
+add_action('admin_enqueue_scripts', NS.'stock_ticker_admin_enqueue');
 
 function stock_ticker_admin_actions() {
     
     relevad_plugin_add_menu_section(); //imported from relevad_plugin_utils.php
     
     //$hook = add_options_page('StockTicker', 'StockTicker', 'manage_options', 'stock_ticker_admin', 'stock_ticker_admin_page'); //wrapper for add_submenu_page specifically into "settings"
-    $hook = add_submenu_page('relevad_plugins', 'StockTicker', 'StockTicker', 'manage_options', 'stock_ticker_admin', 'stock_ticker_admin_page'); 
+    $hook = add_submenu_page('relevad_plugins', 'StockTicker', 'StockTicker', 'manage_options', 'stock_ticker_admin', NS.'stock_ticker_admin_page'); 
     //add_submenu_page( 'options-general.php', $page_title, $menu_title, $capability, $menu_slug, $function ); // do not use __FILE__ for menu_slug
 }
-add_action('admin_menu', 'stock_ticker_admin_actions');
+add_action('admin_menu', NS.'stock_ticker_admin_actions');
 
 
-// This function is to reset all options inserted into wordpress DB by stock ticker to their default first run initialization values
-// debug only
+//for debugging only
 function stock_ticker_reset_options() {
-
-   update_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL')); //Important no spaces  
+    global $st_global;
+    update_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL')); //Important no spaces  
    
-   $stock_ticker_default_settings = Array(
-    'data_display'      => array(0,1,1,1,1,0),
-    //'default_market'    => 'DOW',
-    //'display_options_strings' => array("Market", "Symbol", "Last value", "Change value", "Change percentage", "Last trade"),
-    'font_color'        => '#5DFC0A', 
-    'bg_color'          => 'black',
-    'text_opacity'      => 1,
-    'bg_opacity'        => 1, 
-    'width'             => 400,
-    'height'            => 20,
-    'font_size'         => 12,
-    'font_family'       => 'Arial',
-    'scroll_speed'      => 60,
-    'display_number'    => 2,
-    'advanced_style'    => 'margin:auto;',
-    'draw_vertical_lines' => true,
-    'draw_triangle'     => true,
-    'change_color'      => 1 //0-none 1-some 2-all
-    );
-    update_option('stock_ticker_default_settings', $stock_ticker_default_settings); //one option to rule them all
+    $stock_ticker_default_settings = Array(
+        'name'                  => 'Default Settings',
+        'data_display'          => array(0,1,1,1,1,0),
+        //'default_market'      => 'DOW',
+        //'display_options_strings' => array("Market", "Symbol", "Last value", "Change value", "Change percentage", "Last trade"),
+        'font_color'            => '#5DFC0A', 
+        'bg_color'              => 'black',
+        'text_opacity'          => 1,
+        'bg_opacity'            => 1, 
+        'width'                 => 400,
+        'height'                => 20,
+        'font_size'             => 12,
+        'font_family'           => 'Arial',
+        'scroll_speed'          => 60,
+        'display_number'        => 2,
+        'advanced_style'        => 'margin:auto;',
+        'draw_vertical_lines'   => true,
+        'draw_triangle'         => true,
+        'change_color'          => 1 //0-none 1-some 2-all
+        );
+        
+    sp_update_row($st_global->table_name, 'Default Settings', $stock_ticker_default_settings);
+    //or do we want to drop table, and recreate from scratch? Would probably want to rename as "re-initialize" 
 }
 
-//This is what displays on the admin page. 
+/** Creates the admin page. **/
 function stock_ticker_admin_page() {
-    global $st_current_version;
-    $version_txt = get_option('stock_ticker_version_text', '') . " v{$st_current_version}";
+    stock_ticker_handle_update();
+    
+    global $st_global;
+    $version_txt = get_option('stock_ticker_version_text', '') . " v{$st_global->current_version}";
     update_option('stock_ticker_version_text', ''); //clear the option after we display it once
     
     echo <<<HEREDOC
@@ -183,7 +230,8 @@ function stock_ticker_admin_page() {
     <p>The stock ticker plugin allows you to create and run your own custom stock tickers.</p>
     <p>Choose your stocks and display settings below.<br />
     Then place your the shortcode <code>[stock-ticker]</code> inside a post, page, or <a href="https://wordpress.org/plugins/shortcode-widget/" ref="external nofollow" target="_blank">Shortcode Widget</a>.<br />
-    Or, you can use <code>&lt;?php echo do_shortcode('[stock-ticker]'); ?&gt;</code> inside your theme files or <a href="https://wordpress.org/plugins/php-code-widget/" ref="external nofollow" target="_blank">PHP Code Widget</a>.</p>
+    Or, you can use <code>&lt;?php echo do_shortcode('[stock-ticker]'); ?&gt;</code> inside your theme files or <a href="https://wordpress.org/plugins/php-code-widget/" ref="external nofollow" target="_blank">PHP Code Widget</a>.
+    </p>
 HEREDOC;
 
     //Feature Improvement: see tracker #22775
@@ -216,10 +264,11 @@ HEREDOC;
 }//End Stock_ticker_admin_page
 
 
-
 //Creates the entire options page. Useful for formatting.
 function stock_ticker_create_display_options() {
-    $st_ds = get_option('stock_ticker_default_settings');
+    global $st_global;
+    
+    $st_ds = sp_get_row($st_global->table_name, 'Default Settings');
     echo "<form action='' method='POST'>
              <div id='sp-form-div' class='postbox-container sp-options'>
                 <div id='normal-sortables' class='meta-box-sortables ui-sortable'>
@@ -229,25 +278,25 @@ function stock_ticker_create_display_options() {
                             stock_ticker_create_template_field();
         echo "              <div class='sp-options-subsection'>
                                 <h4>Ticker Config</h4>";
-                                stock_plugin_cookie_helper(1, 'ticker');
+                                    stock_plugin_cookie_helper(1, 'ticker');
                                     stock_ticker_create_ticker_config($st_ds); 
         echo "                  </div>
                             </div>
                             <div class='sp-options-subsection'>
                                 <h4>Text Config</h4>";
-                                stock_plugin_cookie_helper(2, 'ticker');
+                                    stock_plugin_cookie_helper(2, 'ticker');
                                     stock_ticker_create_text_config($st_ds);
         echo "                  </div>
                             </div>
                             <div class='sp-options-subsection'>
                                 <h4>Stock Display Config</h4>";
-                                stock_plugin_cookie_helper(3, 'ticker');
+                                    stock_plugin_cookie_helper(3, 'ticker');
                                     stock_ticker_create_display_config($st_ds);
         echo "                  </div>
                             </div>
                             <div class='sp-options-subsection'>
                                 <h4>Advanced Styling</h4>";
-                                stock_plugin_cookie_helper(4, 'ticker');
+                                    stock_plugin_cookie_helper(4, 'ticker');
                                     stock_ticker_create_style_field($st_ds);
         echo "                  </div>
                             </div>
@@ -364,9 +413,9 @@ function stock_ticker_create_template_field() {
 }
 
 function stock_ticker_update_display_options() {
+    global $st_global;
+    $st_ds             = sp_get_row($st_global->table_name, 'Default Settings');
     
-    global $stock_ticker_vp;
-    $st_ds             = get_option('stock_ticker_default_settings');
     $selected_template = $_POST['template'];  //NOTE: if this doesn't exist it'll be NULL
     $all_templates     = stock_ticker_templates();
 
@@ -391,19 +440,19 @@ function stock_ticker_update_display_options() {
     //IN FUTURE: this will be replaced with AJAX and javascript validation
     
     //NOTE: stock_ticker_validate_integer($new_val, $min_val, $max_val, $default)
-    $tmp = relevad_plugin_validate_integer($_POST['max_display'],  $stock_ticker_vp['max_display'][0],  $stock_ticker_vp['max_display'][1],  false);
+    $tmp = relevad_plugin_validate_integer($_POST['max_display'],  $st_global->validation_params['max_display'][0],  $st_global->validation_params['max_display'][1],  false);
     if ($tmp) {
     $st_ds_new['display_number'] = $tmp;}
     
-    $tmp = relevad_plugin_validate_integer($_POST['scroll_speed'], $stock_ticker_vp['scroll_speed'][0], $stock_ticker_vp['scroll_speed'][1], false);
+    $tmp = relevad_plugin_validate_integer($_POST['scroll_speed'], $st_global->validation_params['scroll_speed'][0], $st_global->validation_params['scroll_speed'][1], false);
     if ($tmp) {
     $st_ds_new['scroll_speed']   = $tmp;}
     
-    $st_ds_new['width']  = relevad_plugin_validate_integer($_POST['width'],       $stock_ticker_vp['width'][0],        $stock_ticker_vp['width'][1],   $st_ds['width']);
-    $st_ds_new['height'] = relevad_plugin_validate_integer($_POST['height'],      $stock_ticker_vp['height'][0],       $stock_ticker_vp['height'][1],  $st_ds['height']);
+    $st_ds_new['width']  = relevad_plugin_validate_integer($_POST['width'],       $st_global->validation_params['width'][0],        $st_global->validation_params['width'][1],   $st_ds['width']);
+    $st_ds_new['height'] = relevad_plugin_validate_integer($_POST['height'],      $st_global->validation_params['height'][0],       $st_global->validation_params['height'][1],  $st_ds['height']);
     
     // VALIDATE fonts
-    $st_ds_new['font_size']   = relevad_plugin_validate_integer($_POST['font_size'],   $stock_ticker_vp['font_size'][0], $stock_ticker_vp['font_size'][1],  $st_ds['font_size']);
+    $st_ds_new['font_size']   = relevad_plugin_validate_integer($_POST['font_size'],   $st_global->validation_params['font_size'][0], $st_global->validation_params['font_size'][1],  $st_ds['font_size']);
     $st_ds_new['font_family'] = relevad_plugin_validate_font_family($_POST['font_family'], $st_ds['font_family']);
     
     // VALIDATE COLORS
@@ -427,7 +476,7 @@ function stock_ticker_update_display_options() {
     }
     
     //now merge template settings + post changes + old unchanged settings
-    update_option('stock_ticker_default_settings', array_replace($st_ds, $st_ds_new, $template_settings));
+    sp_update_row($st_global->table_name, 'Default Settings', array_replace($st_ds, $st_ds_new, $template_settings));
 }
 
 function stock_ticker_create_ticker_config($st_ds) {
@@ -447,36 +496,36 @@ function stock_ticker_create_ticker_config($st_ds) {
         <label for="input_background_color">Background color: </label>
         <input  id="input_background_color" name="background_color1"     type="text" value="<?php echo $st_ds['bg_color']; ?>" class="itxt color_input" style="width:101px" />
         <sup id="background_color_picker_help"><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" class="color_q">[?]</a></sup>
-		<script>enhanceTypeColor("input_background_color", "background_color_picker_help");</script>
+        <script>enhanceTypeColor("input_background_color", "background_color_picker_help");</script>
         <br />
-       	<label for="input_background_opacity">Background opacity<span id="background_opacity_val0"> (0-1)</span>: </label>
+        <label for="input_background_opacity">Background opacity<span id="background_opacity_val0"> (0-1)</span>: </label>
         <span id="background_opacity_val1"></span>
-		<input  id="input_background_opacity" name="background_opacity"  type="text" value="<?php echo $st_ds['bg_opacity']; ?>" class="itxt"/>
-		<span id="background_opacity_val2"></span>
-		<script>enhanceTypeRange("input_background_opacity", "background_opacity_val");</script> 
+        <input  id="input_background_opacity" name="background_opacity"  type="text" value="<?php echo $st_ds['bg_opacity']; ?>" class="itxt"/>
+        <span id="background_opacity_val2"></span>
+        <script>enhanceTypeRange("input_background_opacity", "background_opacity_val");</script> 
     <?php
 }
 
 function stock_ticker_create_text_config($st_ds) {
-	    $default_fonts = array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "serif", "Times");
+        $default_fonts = array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "serif", "Times");
     ?>
         <label for="input_text_color">Text color: </label>
         <input  id="input_text_color" name="text_color"     type="text"  value="<?php echo $st_ds['font_color']; ?>" class="itxt color_input" style="width:101px" />
     <sup id="text_color_picker_help"><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" class="color_q">[?]</a></sup>
-		
-		<script>enhanceTypeColor("input_text_color", "text_color_picker_help");</script>
+        
+        <script>enhanceTypeColor("input_text_color", "text_color_picker_help");</script>
         
         <label for="input_font_size">Font size: </label>
         <input  id="input_font_size" name="font_size"       type="text"  value="<?php echo $st_ds['font_size']; ?>" class="itxt"   style="width:40px;" />
         <br/>
         
         <label for="input_text_opacity">Text opacity<span id="text_opacity_val0"> (0-1)</span>: </label>
-		<span id="text_opacity_val1"></span>
+        <span id="text_opacity_val1"></span>
         <input  id="input_text_opacity" name="text_opacity"  type="text" value="<?php echo $st_ds['text_opacity']; ?>" class="itxt"/>
-		<span id="text_opacity_val2"></span>
-		
-		<script>enhanceTypeRange("input_text_opacity", "text_opacity_val");</script> 
-		
+        <span id="text_opacity_val2"></span>
+        
+        <script>enhanceTypeRange("input_text_opacity", "text_opacity_val");</script> 
+        
         <br/>
         <label for="input_font_family">Font family: </label>
         <input  id="input_font_family" name="font_family" list="font_family" value="<?php echo $st_ds['font_family']; ?>" autocomplete="on" style="width:125px" />

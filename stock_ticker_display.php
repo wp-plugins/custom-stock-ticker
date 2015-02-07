@@ -1,11 +1,14 @@
 <?php
+namespace stockTicker;
 
+//NOTE: so long as plugin is activated, these will be included regardless of whether the shortcode is on the page
 function stock_ticker_scripts_enqueue($force = false) {
-    global $st_current_version;
+    global $st_global;
+    
     if (is_admin() && !$force) { return; } //skip enqueue on admin pages except for the ticker config page
     
-    wp_register_style ('stock_ticker_style',  plugins_url('stock_ticker_style.css', __FILE__), false, $st_current_version);
-    wp_register_script('stock_ticker_script', plugins_url('stock_ticker_script.js', __FILE__), array( 'jquery' ), $st_current_version, false);
+    wp_register_style ('stock_ticker_style',  plugins_url('stock_ticker_style.css', __FILE__), false,             $st_global->current_version);
+    wp_register_script('stock_ticker_script', plugins_url('stock_ticker_script.js', __FILE__), array( 'jquery' ), $st_global->current_version, false);
 
     wp_enqueue_style ('stock_ticker_style');
     wp_enqueue_script('stock_ticker_script');
@@ -15,15 +18,19 @@ function stock_ticker_scripts_enqueue($force = false) {
     $feed_tag = ( !array_key_exists('reletime', $_COOKIE)  ? "?ft=customstockticker" : "");
     wp_enqueue_script('ipq', "http://websking.com/static/js/ipq.js{$feed_tag}", array(), null, true); //skipping register step
 }
-add_action('wp_enqueue_scripts', 'stock_ticker_scripts_enqueue');
+add_action('wp_enqueue_scripts', NS.'stock_ticker_scripts_enqueue');
 
 
 
-add_shortcode('stock-ticker', 'stock_ticker'); //registers the function stock_ticker when seeing shortcode stock-ticker
+add_shortcode('stock-ticker', NS.'stock_ticker'); //registers the function stock_ticker when seeing shortcode stock-ticker
 
-function stock_ticker($atts){ //attributes are whats include between the [] of the shortcode as parameters
+function stock_ticker($atts) { //attributes are whats include between the [] of the shortcode as parameters
+    global $st_global;
+    
+    stock_ticker_handle_update();
 
     $output = "";
+    
     //NOTE: skipping attributes, because first priority is to get the stock list, if that doesn't exist, nothing else matters.
     $per_category_stock_lists = get_option('stock_ticker_per_category_stock_lists', array()); //default just in case its missing for some reason
     if (empty($per_category_stock_lists)) {
@@ -74,7 +81,7 @@ function stock_ticker($atts){ //attributes are whats include between the [] of t
         return "<!-- WARNING: no stock list found for category: {$cats_used} -->";  //don't fail completely silently
     }
 
-    $st_ds = get_option('stock_ticker_default_settings');
+    $st_ds = sp_get_row($st_global->table_name, 'Default Settings');
 
     //use value in shortcode, otherwise use defaults
     //Known Issue: IDs and attributes, each set of attributes should have a unique id specified by the user. Otherwise tickers may not display as intended
@@ -92,16 +99,15 @@ function stock_ticker($atts){ //attributes are whats include between the [] of t
     if ($bgcolor == null) { $bgcolor = $background_color; } //always use bgcolor instead of background_color if available
     
     //**********validation section***********
-    global $stock_ticker_vp;
     //NOTE: for validation, if option supplied was invalid, use the "global" setting
-    $width        = relevad_plugin_validate_integer($width,  $stock_ticker_vp['width'][0],  $stock_ticker_vp['width'][1],  $st_ds['width']);
-    $height       = relevad_plugin_validate_integer($height, $stock_ticker_vp['height'][0], $stock_ticker_vp['height'][1], $st_ds['height']);
+    $width        = relevad_plugin_validate_integer($width,  $st_global->validation_params['width'][0],  $st_global->validation_params['width'][1],  $st_ds['width']);
+    $height       = relevad_plugin_validate_integer($height, $st_global->validation_params['height'][0], $st_global->validation_params['height'][1], $st_ds['height']);
     
     $text_color   = relevad_plugin_validate_color($text_color, $st_ds['font_color']);
     $bgcolor      = relevad_plugin_validate_color($bgcolor,    $st_ds['bg_color']);
     
-    $scroll_speed = relevad_plugin_validate_integer($scroll_speed,     $stock_ticker_vp['scroll_speed'][0], $stock_ticker_vp['scroll_speed'][1], $st_ds['scroll_speed']);
-    $num_ticker_to_display = relevad_plugin_validate_integer($display, $stock_ticker_vp['max_display'][0],  $stock_ticker_vp['max_display'][1],  $st_ds['display_number']);
+    $scroll_speed = relevad_plugin_validate_integer($scroll_speed,     $st_global->validation_params['scroll_speed'][0], $st_global->validation_params['scroll_speed'][1], $st_ds['scroll_speed']);
+    $num_ticker_to_display = relevad_plugin_validate_integer($display, $st_global->validation_params['max_display'][0],  $st_global->validation_params['max_display'][1],  $st_ds['display_number']);
     //***********DONE validation*************
     
     //NOTE: To make scrolling smooth, we want the number of stocks to always be greater than the number to be displayed simultaniously on the page
