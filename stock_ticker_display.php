@@ -181,12 +181,12 @@ function stock_ticker_create_css_header($id, $entry_width, $st_ds, $width, $heig
    left: {$triangle_left_position}px;
    top:  {$triangle_top_position}px;
 }
-.stock_ticker_{$id} .stock_ticker_triangle.red { /*face down */
+.stock_ticker_{$id} .stock_ticker_triangle.st_red { /*face down */
    border-left:  {$triangle_size}px solid transparent;
    border-right: {$triangle_size}px solid transparent;
    border-top:   {$triangle_size}px solid red;
 }
-.stock_ticker_{$id} .stock_ticker_triangle.green { /*face up */
+.stock_ticker_{$id} .stock_ticker_triangle.st_green { /*face up */
    border-left:   {$triangle_size}px solid transparent;
    border-right:  {$triangle_size}px solid transparent;
    border-bottom: {$triangle_size}px solid green;
