@@ -4,7 +4,7 @@
     Plugin URI: http://relevad.com/wp-plugins/
     Description: Create customizable moving stock tickers that can be placed anywhere on a site using shortcodes.
     Author: Relevad
-    Version: 1.4
+    Version: 1.4.1
     Author URI: http://relevad.com/
 
 */
@@ -34,7 +34,7 @@ $st_global = new \stdClass();
 $st_global->table_name = $wpdb->prefix . 'stock_tickers';
 $st_global->charset    = $wpdb->get_charset_collate(); //requires WP v3.5
 
-$st_global->current_version   = '1.4'; //NOTE: should always match Version: ### in the plugin special comment
+$st_global->current_version   = '1.4.1'; //NOTE: should always match Version: ### in the plugin special comment
 $st_global->validation_params = array( //validation_parameters
     'max_display'  => array(1,20),
     'scroll_speed' => array(1,150),
@@ -54,11 +54,13 @@ include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_ticker_display.php'
 
 function stock_ticker_create_db_table() {  //NOTE: for brevity into a function
     global $st_global;
+    static $run_once = true; //on first run = true
+    if ($run_once === false) return;
     
     //NOTE: later may want: 'default_market'    => 'DOW',   'display_options_strings' 
     $sql = "CREATE TABLE {$st_global->table_name} (
     id                      mediumint(9)                    NOT NULL AUTO_INCREMENT,
-    name                    varchar(50)  DEFAULT ''         NOT NULL ,
+    name                    varchar(50)  DEFAULT ''         NOT NULL,
     bg_color                varchar(7)   DEFAULT '#000000'  NOT NULL,
     font_color              varchar(7)   DEFAULT '#5DFC0A'  NOT NULL,
     font_family             varchar(20)  DEFAULT 'Arial'    NOT NULL,
@@ -75,7 +77,7 @@ function stock_ticker_create_db_table() {  //NOTE: for brevity into a function
     change_color            tinyint(1)   DEFAULT 1          NOT NULL,
     stock_list              text         NOT NULL,
     advanced_style          text         NOT NULL,
-    UNIQUE KEY (name),
+    UNIQUE KEY name (name),
     PRIMARY KEY (id)
     ) {$st_global->charset};";
     
@@ -86,6 +88,7 @@ function stock_ticker_create_db_table() {  //NOTE: for brevity into a function
     
     require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
     dbDelta( $sql ); //this will return an array saying what was done, if we want to output it
+    $run_once = false;
 }
 
 function stock_ticker_activate() {
@@ -128,21 +131,14 @@ function stock_ticker_handle_update() {
         case '1.3.3':
         case '1.3.4':
         case '1.3.5':
-            stock_ticker_create_db_table(); //this should only be called once if needed
-            $default_settings = get_option('stock_ticker_default_settings', false);
-            if ($default_settings === false) { //if no other version existed
-                $values = array( //NOTE: the rest should all be the defaults
-                        'name'           => 'Default Settings',
-                        'advanced_style' => 'margin: auto;'
-                        );
-                sp_add_row($st_global->table_name, $values);
-            }
-            else {
-                $default_settings['name'] = 'Default Settings';
-                sp_add_row($st_global->table_name, $default_settings);
+            stock_ticker_create_db_table(); //this should only be called once if at all
+
+            $default_settings['name'] = 'Default Settings';
+            if (false !== sp_add_row($st_global->table_name, $default_settings))
                 delete_option('stock_ticker_default_settings');
-            }
             
+        case '1.4':
+            stock_ticker_create_db_table();
             //*****************************************************
             //this will always be right above st_global->current_version case
             //keep these 2 updates paired
@@ -253,7 +249,7 @@ HEREDOC;
 HEREDOC;
     echo do_shortcode('[stock-ticker]'); //Feature Improvement: see tracker #22775
     echo <<<HEREDOC
-               <p>Note: To preview your settings, you must save changes.</p>
+               <p>Note: To preview your changes you must save changes.</p>
             </div>
          </div>
       </div>
