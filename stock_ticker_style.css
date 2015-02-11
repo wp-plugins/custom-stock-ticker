@@ -4,6 +4,7 @@
 	overflow:hidden;
 	border-radius:4px;
 	white-space: nowrap;
+    line-height: normal;
 }
 
 .stock_ticker_slider{
