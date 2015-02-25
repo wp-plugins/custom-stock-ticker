@@ -1,6 +1,5 @@
 <?php
 namespace stockTicker;
-//define('STOCK_PLUGIN_UTILS', true, false); //flag for whether this file was already included anywhere
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // for the category stock list portion of the admin UI

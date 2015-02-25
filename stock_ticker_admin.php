@@ -159,7 +159,8 @@ function stock_ticker_handle_update() {
 function stock_ticker_admin_enqueue($hook) {
     global $st_global;
 
-    if ($hook != 'relevad-plugins_page_stock_ticker_admin') {return;} //do not run on other admin pages
+    //example: relevad-plugins_page_stock_ticker_admin
+    if (strpos($hook, 'stock_ticker') === false) {return;} //do not run on other admin pages
     
     wp_register_style ('stock_plugin_admin_style',  plugins_url('stock_plugin_admin_style.css', __FILE__), false,             $st_global->current_version);
     wp_register_script('stock_plugin_admin_script', plugins_url('stock_plugin_admin_script.js', __FILE__), array( 'jquery' ), $st_global->current_version, false);
