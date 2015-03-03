@@ -17,12 +17,19 @@ function slider_scroll(target, speed, current_entry, end_entry){
         });
 }
 
-function stock_ticker_start_js(config) {
-	var scroller = jQuery(config['ticker_root']);
-	var slider   = scroller.find('.stock_ticker_slider');
-	var entry    = scroller.find('.stock_ticker_entry'); //saves a list of these elms
-	var last_entry = entry.length - 1;
-
-	scroller.fadeTo(1000, config['final_opacity']);
-	slider_scroll(slider, config["scroll_speed"], 0, last_entry);
+if ((Modernizr.cssanimations) && (Modernizr.csstransforms)) { // If animation & transforms are supported
+    var stock_ticker_start_js = function(config) {
+        document.getElementById("ticker-object-main").className += " scrolling-ticker-class"; // Then apply the class which starts the CSS3 animation
+        document.getElementById("ticker-object-second").className += " scrolling-ticker-class";
+    }
+} else { // If animation & transforms are not supported
+    var stock_ticker_start_js = function(config) {
+        var deleteMe = document.getElementById("ticker-object-second"); // Locate the second ticker copy
+        deleteMe.parentNode.removeChild(deleteMe); // Delete the second ticker copy
+        var scroller = jQuery(config['ticker_root']);
+        var slider   = scroller.find('.stock_ticker_slider');
+        var entry    = scroller.find('.stock_ticker_entry'); //saves a list of these elms
+        var last_entry = entry.length - 1;
+        slider_scroll(slider, config["scroll_speed"], 0, last_entry);
+    }
 }

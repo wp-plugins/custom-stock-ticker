@@ -51,5 +51,22 @@ color: green;
 color: gray;
 }
 
+/* keyframes are defined here because firefox has a bug wherein keyframes don't work in scoped CSS & wanted to keep them together */
+@-webkit-keyframes marquee {
+    0%   { transform: translateX(0px); }    /*Start the animation at the left */
+    100% { transform: translateX(-100%); }  /*Loop the ticker once it has scrolled 100% of its entire width */
+}
+@-moz-keyframes marquee {
+    0%   { transform: translateX(0px); }
+    100% { transform: translateX(-100%); }
+}
+@keyframes marquee {
+    0%   { transform: translateX(0px); }
+    100% { transform: translateX(-100%); }
+}
 
-
+.ticker-wrapper:hover .scrolling-ticker-class {
+	-webkit-animation-play-state: paused;
+    -moz-animation-play-state: paused;
+	animation-play-state: paused;
+}

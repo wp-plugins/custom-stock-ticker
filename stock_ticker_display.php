@@ -8,9 +8,11 @@ function stock_ticker_scripts_enqueue($force = false) {
     if (is_admin() && !$force) { return; } //skip enqueue on admin pages except for the ticker config page
     
     wp_register_style ('stock_ticker_style',  plugins_url('stock_ticker_style.css', __FILE__), false,             $st_global->current_version);
+    wp_register_script('modernizr', plugins_url('modernizr.js', __FILE__), array( 'jquery' ),                     $st_global->current_version, false);
     wp_register_script('stock_ticker_script', plugins_url('stock_ticker_script.js', __FILE__), array( 'jquery' ), $st_global->current_version, false);
 
     wp_enqueue_style ('stock_ticker_style');
+    wp_enqueue_script('modernizr');
     wp_enqueue_script('stock_ticker_script');
     
     if (is_admin()) { return; } //only run this on regular pages
@@ -123,14 +125,14 @@ function stock_ticker($atts) { //attributes are whats include between the [] of 
     $entry_width = max($minimum_width, $entry_width); //NOTE: warning issued in admin config update options
     //****** end fix scaling ******* 
 
-    $output  = stock_ticker_create_css_header($id, $entry_width, $st_ds, $width, $height, $text_color, $bgcolor);
+    $output  = stock_ticker_create_css_header($id, $entry_width, $st_ds, $width, $height, $text_color, $bgcolor, $scroll_speed, count($stock_data_list));
     $output .= stock_ticker_create_ticker    ($id, $entry_width, $st_ds, $stock_data_list, $scroll_speed);
 
     return $output;
 }
 
 //Creates the internal style sheet for all of the various elements.
-function stock_ticker_create_css_header($id, $entry_width, $st_ds, $width, $height, $text_color, $bgcolor) {
+function stock_ticker_create_css_header($id, $entry_width, $st_ds, $width, $height, $text_color, $bgcolor, $scroll_speed, $num_displayed_stocks) {
         
         $number_of_values = array_sum($st_ds['data_display']);
         if ($st_ds['draw_triangle'] == 1) {
@@ -150,17 +152,19 @@ function stock_ticker_create_css_header($id, $entry_width, $st_ds, $width, $heig
         $vbar_height = round($height * 0.7,                0, PHP_ROUND_HALF_DOWN); //used for the vertical bar only
         $vbar_top    = round(($height - $vbar_height) / 2, 0, PHP_ROUND_HALF_DOWN); 
         //NOTE: stock_ticker_{$id} is actually a class, so we can properly have multiple per page, IDs would have to be globally unique
+        $animation_time = $entry_width / $scroll_speed * $num_displayed_stocks;
+        $slider_width = $entry_width * $num_displayed_stocks;
+        $double_slider_width = ($slider_width * 2) + 20;    // 20 extra px added just in case
         return <<<HEREDOC
 <style type="text/css" scoped>
 .stock_ticker_{$id} {
-   opacity:          0;
    width:            {$width}px;
    height:           {$height}px;
    background-color: {$bgcolor};
    {$st_ds['advanced_style']}
 }
 .stock_ticker_{$id} .stock_ticker_slider {
-   width:  {$width}px;
+   width:  {$slider_width}px;
    height: {$height}px;
 }
 .stock_ticker_{$id} .stock_ticker_entry {
@@ -195,6 +199,21 @@ function stock_ticker_create_css_header($id, $entry_width, $st_ds, $width, $heig
    height: {$vbar_height}px;
    top:    {$vbar_top}px;
 }
+
+.ticker-wrapper {
+    width: {$double_slider_width}px;            /*The wrapper needs to be AT LEAST this wide to prevent wrapping. Wider is fine. */
+}
+
+.scrolling-ticker-class {
+    position:relative;
+    float:left;
+    width:auto;
+    -webkit-animation: marquee {$animation_time}s linear infinite;
+    -moz-animation: marquee {$animation_time}s linear infinite; 
+    animation: marquee {$animation_time}s linear infinite;      /*Assign the animation to the main ticker container*/
+}
+
+
 </style>
 HEREDOC;
 
@@ -217,12 +236,17 @@ function stock_ticker_create_ticker($id, $entry_width, $st_ds, $data_list, $scro
 
         $the_jquery =  stock_ticker_create_jquery($scroll_speed, $st_ds);
 
-        return <<<STC
+return <<<STC
                 <div class="stock_ticker stock_ticker_{$id}">
-                        <div class="stock_ticker_slider">
+                    <div class="ticker-wrapper">
+                        <div class="stock_ticker_slider" id="ticker-object-main">
+                                {$stock_entries}
+                        </div>
+                        <div class="stock_ticker_slider" id="ticker-object-second">
                                 {$stock_entries}
                         </div><!-- end slider -->
-                        {$the_jquery}
+                    </div>
+                       {$the_jquery} 
                 </div><!-- end ticker {$id} -->
 STC;
 
