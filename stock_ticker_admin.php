@@ -4,12 +4,12 @@
     Plugin URI: http://relevad.com/wp-plugins/
     Description: Create customizable moving stock tickers that can be placed anywhere on a site using shortcodes.
     Author: Relevad
-    Version: 1.4.1
+    Version: 2.0
     Author URI: http://relevad.com/
 
 */
 
-/*  Copyright 2014 Relevad Corporation (email: stock-ticker@relevad.com) 
+/*  Copyright 2015 Relevad Corporation (email: stock-ticker@relevad.com) 
  
     This program is free software; you can redistribute it and/or modify 
     it under the terms of the GNU General Public License as published by 
@@ -29,20 +29,34 @@ namespace stockTicker;
 define(__NAMESPACE__ . '\NS', __NAMESPACE__ . '\\');
 
 global $wpdb;
-global $st_global;
-$st_global = new \stdClass();
-$st_global->table_name = $wpdb->prefix . 'stock_tickers';
-$st_global->charset    = $wpdb->get_charset_collate(); //requires WP v3.5
 
-$st_global->current_version   = '1.4.1'; //NOTE: should always match Version: ### in the plugin special comment
-$st_global->validation_params = array( //validation_parameters
-    'max_display'  => array(1,20),
-    'scroll_speed' => array(1,150),
-    'width'        => array(200,2000),
-    'height'       => array(10,100),
-    'font_size'    => array(5,32)
-);
-//using this we might be able to reduce the number of variables passed around between functions
+global $list_table; //needs to be created inside stock_ticker_add_screen_options, but utilized within stock_ticker_list_page
+
+global $relevad_plugins;
+if (!is_array($relevad_plugins)) {
+    $relevad_plugins = array();
+}
+    $relevad_plugins[] = array(
+    'url'  => '/wp-admin/admin.php?page=stock_ticker_list',
+    'name' => 'Custom Stock Ticker'
+    );
+
+//NOTE: These will automatically be within the namespace
+define(NS.'SP_TABLE_NAME', $wpdb->prefix . 'stock_tickers');
+define(NS.'SP_CHARSET',    $wpdb->get_charset_collate()); //requires WP v3.5
+
+define(NS.'SP_CURRENT_VERSION', '2.0');   //NOTE: should always match Version: ### in the plugin special comment
+define(NS.'SP_TYPE', 'ticker');
+define(NS.'SP_VALIDATION_PARAMS', <<< DEFINE
+{
+"max_display":   [1,   20],
+"scroll_speed":  [1,   150],
+"width":         [200, 2000],
+"height":        [10,  100],
+"font_size":     [5,   32]
+}
+DEFINE
+);  //access with (array)json_decode(SP_VALIDATION_PARAMS);
 
 // Feature Improvement: think about putting each individual config into a class, does that buy us anything?
 // http://stackoverflow.com/questions/1957732/can-i-include-code-into-a-php-class
@@ -53,12 +67,13 @@ include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_plugin_cache.php';
 include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_ticker_display.php';
 
 function stock_ticker_create_db_table() {  //NOTE: for brevity into a function
-    global $st_global;
+    $table_name = SP_TABLE_NAME;
+    $charset    = SP_CHARSET;
     static $run_once = true; //on first run = true
     if ($run_once === false) return;
     
     //NOTE: later may want: 'default_market'    => 'DOW',   'display_options_strings' 
-    $sql = "CREATE TABLE {$st_global->table_name} (
+    $sql = "CREATE TABLE {$table_name} (
     id                      mediumint(9)                    NOT NULL AUTO_INCREMENT,
     name                    varchar(50)  DEFAULT ''         NOT NULL,
     bg_color                varchar(7)   DEFAULT '#000000'  NOT NULL,
@@ -79,7 +94,7 @@ function stock_ticker_create_db_table() {  //NOTE: for brevity into a function
     advanced_style          text         NOT NULL,
     UNIQUE KEY name (name),
     PRIMARY KEY (id)
-    ) {$st_global->charset};";
+    ) {$charset};";
     
     //NOTE: Extra spaces for readability screw up dbDelta, so we remove those
     $sql = preg_replace('/ +/', ' ', $sql);
@@ -92,7 +107,7 @@ function stock_ticker_create_db_table() {  //NOTE: for brevity into a function
 }
 
 function stock_ticker_activate() {
-    global $st_global;
+    $current_version = SP_CURRENT_VERSION;
 
     if (!get_option('stock_ticker_category_stock_list') && !get_option('stock_ticker_per_category_stock_lists')) {
         //if neither of these exist then assume initial install
@@ -101,10 +116,10 @@ function stock_ticker_activate() {
                         'name'           => 'Default Settings',
                         'advanced_style' => 'margin: auto;'
                         );
-        sp_add_row($st_global->table_name, $values);
+        sp_add_row($values);
         add_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL'));
-        add_option('stock_ticker_version',                         $st_global->current_version);
-        add_option('stock_ticker_version_text', "Initial install v{$st_global->current_version}");
+        add_option('stock_ticker_version',                         $current_version);
+        add_option('stock_ticker_version_text', "Initial install v{$current_version}");
     }
 }
 register_activation_hook( __FILE__, NS.'stock_ticker_activate' );
@@ -112,7 +127,8 @@ register_activation_hook( __FILE__, NS.'stock_ticker_activate' );
 
 //*********cleanup and conversion functions for updating versions *********
 function stock_ticker_handle_update() {
-    global $st_global;
+    $current_version = SP_CURRENT_VERSION;
+    
     $db_version = get_option('stock_ticker_version', '0');
 
     //NOTE: Don't forget to add each and every version number as a case
@@ -131,21 +147,23 @@ function stock_ticker_handle_update() {
         case '1.3.3':
         case '1.3.4':
         case '1.3.5':
-            stock_ticker_create_db_table(); //this should only be called once if at all
+            stock_ticker_create_db_table(); //Added table storage structure in 1.4
 
             $default_settings['name'] = 'Default Settings';
-            if (false !== sp_add_row($st_global->table_name, $default_settings))
+            if (false !== sp_add_row($default_settings))
                 delete_option('stock_ticker_default_settings');
             
         case '1.4':
-            stock_ticker_create_db_table();
+            stock_ticker_create_db_table(); //bugfix for table storage in 1.4.1
+
+        case '1.4.1':
             //*****************************************************
-            //this will always be right above st_global->current_version case
+            //this will always be right above current_version case
             //keep these 2 updates paired
-            update_option('stock_ticker_version',      $st_global->current_version);
+            update_option('stock_ticker_version',      $current_version);
             update_option('stock_ticker_version_text', " updated from v{$db_version} to");
             //NOTE: takes care of add_option() as well
-        case $st_global->current_version:
+        case $current_version:
             break;
         //NOTE: if for any reason the database entry disapears again we might have a problem updating or performing table modifcations on tables already modified.
         default: //this shouldn't be needed
@@ -157,13 +175,14 @@ function stock_ticker_handle_update() {
 //*************************************************************************
 
 function stock_ticker_admin_enqueue($hook) {
-    global $st_global;
+    $current_version = SP_CURRENT_VERSION;
 
+    //echo "<!-- testing {$hook} '".strpos($hook, 'stock_ticker')."'-->";
     //example: relevad-plugins_page_stock_ticker_admin
     if (strpos($hook, 'stock_ticker') === false) {return;} //do not run on other admin pages
     
-    wp_register_style ('stock_plugin_admin_style',  plugins_url('stock_plugin_admin_style.css', __FILE__), false,             $st_global->current_version);
-    wp_register_script('stock_plugin_admin_script', plugins_url('stock_plugin_admin_script.js', __FILE__), array( 'jquery' ), $st_global->current_version, false);
+    wp_register_style ('stock_plugin_admin_style',  plugins_url('stock_plugin_admin_style.css', __FILE__), false,             $current_version);
+    wp_register_script('stock_plugin_admin_script', plugins_url('stock_plugin_admin_script.js', __FILE__), array( 'jquery' ), $current_version, false);
 
     wp_enqueue_style ('stock_plugin_admin_style');
     wp_enqueue_script('stock_plugin_admin_script');
@@ -176,20 +195,49 @@ function stock_ticker_admin_actions() {
     
     relevad_plugin_add_menu_section(); //imported from relevad_plugin_utils.php
     
-    //$hook = add_options_page('StockTicker', 'StockTicker', 'manage_options', 'stock_ticker_admin', 'stock_ticker_admin_page'); //wrapper for add_submenu_page specifically into "settings"
-    $hook = add_submenu_page('relevad_plugins', 'StockTicker', 'StockTicker', 'manage_options', 'stock_ticker_admin', NS.'stock_ticker_admin_page'); 
-    //add_submenu_page( 'options-general.php', $page_title, $menu_title, $capability, $menu_slug, $function ); // do not use __FILE__ for menu_slug
+           //add_submenu_page( 'options-general.php', $page_title,   $menu_title,         $capability,       $menu_slug,           $function ); // do not use __FILE__ for menu_slug
+    $hook1 = add_submenu_page('relevad_plugins',     'StockTickers', 'StockTickers',      'manage_options', 'stock_ticker_list',   NS.'stock_ticker_list_page'); 
+    $hook2 = add_submenu_page('relevad_plugins',     'New Ticker',   '&rarr; New Ticker', 'manage_options', 'stock_ticker_addnew', NS.'stock_ticker_addnew');     
+
+    add_action( "load-{$hook1}", NS.'stock_ticker_add_screen_options' ); 
+    //this adds the screen options dropdown along the top
 }
 add_action('admin_menu', NS.'stock_ticker_admin_actions');
 
 
-//for debugging only
+function stock_ticker_add_screen_options() {
+    global $list_table;
+    
+    $option = 'per_page';
+    $args = array(
+         'label' => 'Shortcodes',
+         'default' => 10,
+         'option' => 'shortcodes_per_page'
+    );
+    add_screen_option( $option, $args );
+    
+    //placed in this function so that list_table can get the show/hide columns checkboxes automagically
+    $list_table = new stock_shortcode_List_Table(); //uses relative namespace automatically
+}
+
+function stock_ticker_set_screen_option($status, $option, $value) {
+    //https://www.joedolson.com/2013/01/custom-wordpress-screen-options/
+    //standard screen options are not filtered in this way
+    //if ( 'shortcodes_per_page' == $option ) return $value;
+    
+    //return $status;
+    
+    return $value;
+}
+add_filter('set-screen-option', NS.'stock_ticker_set_screen_option', 10, 3);
+
+//ON default settings, should restore to defaults
+//ON other shortcodes, should just reload the page
 function stock_ticker_reset_options() {
-    global $st_global;
     update_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL')); //Important no spaces  
    
     $stock_ticker_default_settings = Array(
-        'name'                  => 'Default Settings',
+        //'name'                  => 'Default Settings', //redundant
         'data_display'          => array(0,1,1,1,1,0),
         //'default_market'      => 'DOW',
         //'display_options_strings' => array("Market", "Symbol", "Last value", "Change value", "Change percentage", "Last trade"),
@@ -209,48 +257,242 @@ function stock_ticker_reset_options() {
         'change_color'          => 1 //0-none 1-some 2-all
         );
         
-    sp_update_row($st_global->table_name, 'Default Settings', $stock_ticker_default_settings);
-    //or do we want to drop table, and recreate from scratch? Would probably want to rename as "re-initialize" 
+    sp_update_row($stock_ticker_default_settings, array('name' => 'Default Settings'));
+    
+    stock_plugin_notice_helper("Reset 'Default Settings' to initial install values.");
+}
+
+function stock_ticker_addnew() { //default name is the untitled_id#
+    
+    stock_ticker_handle_update();
+    
+    //Add row to DB with defaults, name = same as row id
+    $values = array( //NOTE: the rest should all be the defaults
+                        //'name'           => 'Default Settings', //no name to start with, have to do an update after
+                        'advanced_style' => 'margin: auto;'
+                        );
+    $new_id = sp_add_row($values);
+    
+    if ($new_id !== false) {
+        stock_plugin_notice_helper("Added New ticker");
+        stock_ticker_admin_page($new_id);
+    }
+    else {
+        stock_plugin_notice_helper("ERROR: Unable to create new ticker. <a href='javascript:history.go(-1)'>Go back</a>", 'error');
+    }
+    
+    return;
+}
+
+// Default Admin page.
+// PAGE for displaying all previously saved tickers.
+function stock_ticker_list_page() {
+    global $list_table;
+    
+    stock_ticker_handle_update();
+
+    //This page is referenced from all 3 options: copy, edit, delete and will transfer control to the appropriate function
+    $action = (isset($_GET['action'])    ? $_GET['action']    : '');
+    $ids    = (isset($_GET['shortcode']) ? $_GET['shortcode'] : false); //form action post does not clear url params
+
+    //action = -1 is from the search query
+    if (!empty($action) && $action !== '-1' && !is_array($ids) && !is_numeric($ids)) {
+        stock_plugin_notice_helper("ERROR: No shortcode ID for action: {$action}.", 'error');
+        $action = ''; //clear the action so we skip to default switch action
+    }
+    
+    switch ($action) {
+        case 'copy':
+            if (is_array($ids)) $ids = $ids[0];
+            $old_id = $ids;
+            $ids = sp_clone_row((int)$ids);
+            if ($ids === false) {
+                stock_plugin_notice_helper("ERROR: Unable to clone shortcode {$old_id}. <a href='javascript:history.go(-1)'>Go back</a>", 'error');
+                return;
+            }
+            stock_plugin_notice_helper("Cloned {$old_id} to {$ids}");
+        case 'edit':
+            if (is_array($ids)) $ids = $ids[0];
+            stock_ticker_admin_page((int)$ids);
+            break;
+
+        case 'delete': //fall through to display the list as normal
+            if (! isset($_GET['shortcode'])) {
+                stock_plugin_notice_helper("ERROR: No shortcodes selected for deletion.", 'error');
+            }
+            else {
+                $ids = $_GET['shortcode'];
+                if (!is_array($ids)) {
+                    $ids = (array)$ids; //make it an array
+                }
+                sp_delete_rows($ids); //NOTE: no error checking needed, handled inside
+            }
+        default:
+            $current_version = SP_CURRENT_VERSION;
+            
+            $version_txt = get_option('stock_ticker_version_text', '') . " v{$current_version}";
+            update_option('stock_ticker_version_text', ''); //clear the option after we display it once
+        
+            $list_table->prepare_items();
+            
+            //$thescreen = get_current_screen();
+            
+            echo <<<HEREDOC
+            <div id="sp-options-page">
+                <h1>Custom Stock Ticker</h1><sub>{$version_txt}</sub>
+                <p>The Custom Stock ticker plugin allows you to create and run your own custom stock tickers.</p>
+                <p>To configure a ticker, click the edit button below that ticker's name. Or add a new ticker using the link below.</p>
+                <p>To place a ticker onto your site, copy a shortcode from the table below, or use the default shortcode of <code>[stock-ticker]</code>, and paste it into a post, page, or <a href="https://wordpress.org/plugins/shortcode-widget/" ref="external nofollow" target="_blank">Shortcode Widget</a>.<br />
+                Alternatively, you can use <code>&lt;?php echo do_shortcode('[stock-ticker]'); ?&gt;</code> inside your theme files or a <a href="https://wordpress.org/plugins/php-code-widget/" ref="external nofollow" target="_blank">PHP Code Widget</a>.</p>
+            </div>
+                <div id='sp-list-table-page' class='wrap'>
+HEREDOC;
+            echo "<h2>Available Stock Tickers <a href='" . esc_url( menu_page_url( 'stock_ticker_addnew', false ) ) . "' class='add-new-h2'>" . esc_html( 'Add New' ) . "</a>";
+
+            if ( ! empty( $_REQUEST['s'] ) ) {
+                echo sprintf( '<span class="subtitle">Search results for &#8220;%s&#8221;</span>', esc_html( $_REQUEST['s'] ) );
+            }
+            echo "</h2>";
+          
+            echo "<form method='get' action=''>"; //this arrangement of display within the form, is copied from contactform7
+                echo "<input type='hidden' name='page' value='" . esc_attr( $_REQUEST['page'] ) . "' />";
+                $list_table->search_box( 'Search Stock Tickers', 'stock-ticker' ); 
+                $list_table->display();  //this actually renders the table itself
+            echo "</form></div>";
+            
+            break;
+    }
 }
 
 /** Creates the admin page. **/
-function stock_ticker_admin_page() {
-    stock_ticker_handle_update();
+function stock_ticker_admin_page($id = '') {
     
-    global $st_global;
-    $version_txt = get_option('stock_ticker_version_text', '') . " v{$st_global->current_version}";
-    update_option('stock_ticker_version_text', ''); //clear the option after we display it once
+    if ($id === '') {
+        stock_plugin_notice_helper("ERROR: No shortcode ID found", 'error'); return; //This should never happen
+    }
     
-    echo <<<HEREDOC
-<div id="sp-options-page">
-    <h1>Custom Stock Ticker</h1><sub>{$version_txt}</sub>
-    <p>The stock ticker plugin allows you to create and run your own custom stock tickers.</p>
-    <p>Choose your stocks and display settings below.<br />
-    Then place your the shortcode <code>[stock-ticker]</code> inside a post, page, or <a href="https://wordpress.org/plugins/shortcode-widget/" ref="external nofollow" target="_blank">Shortcode Widget</a>.<br />
-    Or, you can use <code>&lt;?php echo do_shortcode('[stock-ticker]'); ?&gt;</code> inside your theme files or <a href="https://wordpress.org/plugins/php-code-widget/" ref="external nofollow" target="_blank">PHP Code Widget</a>.
-    </p>
-HEREDOC;
-
-    //Feature Improvement: see tracker #22775
+    $ds_flag = false; //flag used for handling specifics of default settings
+    if ($id === 1) {
+        $ds_flag = true;
+    }
+    
     if (isset($_POST['save_changes'])) {
-        stock_plugin_update_per_category_stock_lists('ticker');
-        stock_ticker_update_display_options();
+        if ($ds_flag) stock_plugin_update_per_category_stock_lists();
+        stock_ticker_update_display_options($id); //pass in the unchanged settings
+        stock_plugin_notice_helper("Changes saved (Random: ".rand().")"); //Remove after tracker #23768
     }
     elseif (isset($_POST['reset_options'])) {
-        stock_ticker_reset_options();
+        if ($ds_flag)
+            stock_ticker_reset_options();
+        else
+            stock_plugin_notice_helper("Reverted all changes");
     }
-    stock_ticker_create_display_options();
+
+    $shortcode_settings = sp_get_row($id, 'id'); //NOTE: have to retrieve AFTER update
+    if ($shortcode_settings === null) {
+        stock_plugin_notice_helper("ERROR: No shortcode ID '{$id}' exists. <a href='javascript:history.go(-1)'>Go back</a>", 'error');
+        return;
+    }
+
+    $the_action = '';
+    if (!isset($_GET['action']) || $_GET['action'] != 'edit') {
+        $the_action = '?page=stock_ticker_list&action=edit&shortcode=' . $id; //for turning copy -> edit
+    }
+    
+    $reset_btn    = "Revert Changes";
+    $reset_notice = "";
+    if ($ds_flag) {
+        $reset_btn    = "Reset to Defaults";
+        $reset_notice = "<sup>*</sup><br /><sup>* NOTE: 'Reset to Defaults' also clears all default stock lists.</sup>";
+    }
+
     echo <<<HEREDOC
+<div id="sp-options-page">
+    <h1>Edit Custom Stock Ticker</h1>
+    <p>Choose your stocks and display settings below.</p>
+    <form action='{$the_action}' method='POST'>
+HEREDOC;
+
+    echo "<div id='sp-form-div' class='postbox-container sp-options'>
+            <div id='normal-sortables' class='meta-box-sortables ui-sortable'>
+                <div id='referrers' class='postbox'>";
+    if (!$ds_flag) {
+        echo      "<div class='inside'>";
+        stock_ticker_create_name_field($shortcode_settings);
+    }
+    else {
+        echo "     <h3 class='hndle'>Default Shortcode Settings</h3>
+                    <div class='inside'>";
+    }
+                        stock_ticker_create_template_field();
+    echo "              <div class='sp-options-subsection'>
+                            <h4>Ticker Config</h4>";
+                                stock_plugin_cookie_helper(1);
+                                stock_ticker_create_ticker_config($shortcode_settings); 
+    echo "                  </div>
+                        </div>
+                        <div class='sp-options-subsection'>
+                            <h4>Text Config</h4>";
+                                stock_plugin_cookie_helper(2);
+                                stock_ticker_create_text_config($shortcode_settings);
+    echo "                  </div>
+                        </div>
+                        <div class='sp-options-subsection'>
+                            <h4>Stock Display Config</h4>";
+                                stock_plugin_cookie_helper(3);
+                                stock_ticker_create_display_config($shortcode_settings);
+    echo "                  </div>
+                        </div>
+                        <div class='sp-options-subsection'>
+                            <h4>Advanced Styling</h4>";
+                                stock_plugin_cookie_helper(4);
+                                stock_ticker_create_style_field($shortcode_settings);
+    echo "                  </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <input type='submit' name='save_changes'  value='Save'              class='button-primary' />
+            <input type='submit' name='reset_options' value='{$reset_btn}' class='button-primary' />
+            {$reset_notice}
+         </div>
+    
+         <div id='sp-cat-stocks-div' class='postbox-container sp-options'>
+             <div id='normal-sortables' class='meta-box-sortables ui-sortable'>
+                 <div id='referrers' class='postbox'>
+                     <h3 class='hndle'><span>Stocks</span></h3>
+                     <div class='inside'>
+                         <p>Type in your stocks as a comma-separated list.<br /> 
+                         Example: <code>GOOG,YHOO,AAPL</code>.</p>
+                         <p>
+                             When a page loads with a ticker, the stocks list of the category of that page is loaded. 
+                             If that category has no stocks associated with it, the default list is loaded.
+                         </p>
+                         <p>For Nasdaq, use <code>^IXIC</code>. For S&amp;P500, use <code>^GSPC</code>. Unfortunately, DOW is currently not available.</p>
+                         <p>Here are some example stocks you can try:<br/>
+                         BAC, CFG, AAPL, YHOO, SIRI, VALE, QQQ, GE, MDR, RAD, BABA, SUNE, FB, BBRY, MSFT, MU, PFE, F, GOOG</p>"; 
+                        if ($ds_flag) stock_plugin_create_per_category_stock_lists();
+                        else          stock_plugin_create_stock_list_section($shortcode_settings);
+    echo "           </div>
+                     </div>
+                 </div>
+             </div>";
+
+    $the_name = '';
+    if (!$ds_flag) $the_name = " name='{$shortcode_settings['name']}'";
+    echo <<<HEREDOC
+   </form>
    <div id="sp-preview" class="postbox-container sp-options">
       <div id="normal-sortables" class="meta-box-sortables ui-sortable">
          <div id="referrers" class="postbox">
             <h3 class="hndle"><span>Preview</span></h3>
             <div class="inside">
-               <p>The following ticker uses the default shortcode:<code>[stock-ticker]</code></p>
+               <p>Based on the last saved settings, this is what the shortcode <code>[stock-ticker{$the_name}]</code> will generate:</p>
 HEREDOC;
-    echo do_shortcode('[stock-ticker]'); //Feature Improvement: see tracker #22775
+
+    echo do_shortcode("[stock-ticker{$the_name}]"); //Feature Improvement: see tracker #22775
     echo <<<HEREDOC
-               <p>Note: To preview your changes you must save changes.</p>
+               <p>To preview your latest changes you must first save changes.</p>
             </div>
          </div>
       </div>
@@ -260,75 +502,7 @@ HEREDOC;
 HEREDOC;
 }//End Stock_ticker_admin_page
 
-
-//Creates the entire options page. Useful for formatting.
-function stock_ticker_create_display_options() {
-    global $st_global;
-    
-    $st_ds = sp_get_row($st_global->table_name, 'Default Settings');
-    echo "<form action='' method='POST'>
-             <div id='sp-form-div' class='postbox-container sp-options'>
-                <div id='normal-sortables' class='meta-box-sortables ui-sortable'>
-                    <div id='referrers' class='postbox'>
-                        <h3 class='hndle'>Default Ticker Display Settings</h3>
-                        <div class='inside'>";
-                            stock_ticker_create_template_field();
-        echo "              <div class='sp-options-subsection'>
-                                <h4>Ticker Config</h4>";
-                                    stock_plugin_cookie_helper(1, 'ticker');
-                                    stock_ticker_create_ticker_config($st_ds); 
-        echo "                  </div>
-                            </div>
-                            <div class='sp-options-subsection'>
-                                <h4>Text Config</h4>";
-                                    stock_plugin_cookie_helper(2, 'ticker');
-                                    stock_ticker_create_text_config($st_ds);
-        echo "                  </div>
-                            </div>
-                            <div class='sp-options-subsection'>
-                                <h4>Stock Display Config</h4>";
-                                    stock_plugin_cookie_helper(3, 'ticker');
-                                    stock_ticker_create_display_config($st_ds);
-        echo "                  </div>
-                            </div>
-                            <div class='sp-options-subsection'>
-                                <h4>Advanced Styling</h4>";
-                                    stock_plugin_cookie_helper(4, 'ticker');
-                                    stock_ticker_create_style_field($st_ds);
-        echo "                  </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <input type='submit' name='save_changes'  value='Save'              class='button-primary' />
-                <input type='submit' name='reset_options' value='Reset to Defaults' class='button-primary' /><sup>*</sup>
-                <br />
-                <sup>* NOTE: 'Reset to Defaults' also clears all stock lists.</sup>
-             </div>
-        
-             <div id='sp-cat-stocks-div' class='postbox-container sp-options'>
-                 <div id='normal-sortables' class='meta-box-sortables ui-sortable'>
-                     <div id='referrers' class='postbox'>
-                         <h3 class='hndle'><span>Stocks</span></h3>
-                         <div class='inside'>
-                             <p>Type in your stocks as a comma-separated list.<br /> 
-                             Example: <code>GOOG,YHOO,AAPL</code>.</p>
-                             <p>
-                                 When a page loads with a ticker, the stocks list of the category of that page is loaded. 
-                                 If that category has no stocks associated with it, the default list is loaded.
-                             </p>
-                             <p>For Nasdaq, use <code>^IXIC</code>. For S&amp;P500, use <code>^GSPC</code>. Unfortunately, DOW is currently not available.</p>
-                             <p>Here are some example stocks you can try:<br/>
-                             BAC, CFG, AAPL, YHOO, SIRI, VALE, QQQ, GE, MDR, RAD, BABA, SUNE, FB, BBRY, MSFT, MU, PFE, F, GOOG</p>"; 
-                             stock_plugin_create_per_category_stock_lists('ticker');
-        echo "           </div>
-                     </div>
-                 </div>
-             </div>
-          </form>";
-    return;
-}
-
+//NOTE: not moved to the top as a define, because if we have to call json_decode anyways whats the point
 function stock_ticker_templates() { //helper function to avoid global variables
     return array( //this is specifically for preset theme template configs
     
@@ -393,25 +567,26 @@ function stock_ticker_templates() { //helper function to avoid global variables
 function stock_ticker_create_template_field() {
 
     $all_settings = stock_ticker_templates();
-    ?>
-        <label for="input_default_settings">Template: </label>
-        <select id="input_default_settings" name="template" style="width:205px;">
-        <option selected> ------- </option>
-        <?php 
-            foreach($all_settings as $key=>$setting){
-                echo "<option value='{$key}'>{$setting['name']}</option>";
-            }
-        ?>
-        </select>
-        <input type="submit" name="save_changes"  value="Apply" class="button-primary" />&nbsp;<sup>*</sup>
+
+    echo "<label for='input_default_settings'>Template: </label>
+          <select id='input_default_settings' name='template' style='width:205px;'>
+          <option selected> ------- </option>";
+
+          foreach($all_settings as $key=>$setting){
+             echo "<option value='{$key}'>{$setting['name']}</option>";
+          }
+
+    echo "</select>
+        <input type='submit' name='save_changes'  value='Apply' class='button-primary' />&nbsp;<sup>*</sup>
         <br/>
-        <sup>* NOTE: Not all options are over-written by template</sup>
-    <?php
+        <sup>* NOTE: Not all options are over-written by template</sup>";
+
 }
 
-function stock_ticker_update_display_options() {
-    global $st_global;
-    $st_ds             = sp_get_row($st_global->table_name, 'Default Settings');
+function stock_ticker_update_display_options($id) {
+    
+    $unchanged = sp_get_row($id, 'id');
+    $validation_params = (array)json_decode(SP_VALIDATION_PARAMS);
     
     $selected_template = $_POST['template'];  //NOTE: if this doesn't exist it'll be NULL
     $all_templates     = stock_ticker_templates();
@@ -420,146 +595,168 @@ function stock_ticker_update_display_options() {
     if(array_key_exists($selected_template, $all_templates)) {
         
         $template_settings = $all_templates[$selected_template];
-        unset($template_settings['name']); //throw out the name or we'll end up adding it to default settings (which we don't need)
+        unset($template_settings['name']); //throw out the name or we'll end up overwriting this shortcode's name
 
     }
 
-    $st_ds_new = array();
+    $settings_new = array();
     
     //NOTE: these won't exist in the post if they are unchecked
     //NOTE: wp_options stores booleans as "on" or "" within mysql
-    $st_ds_new['draw_vertical_lines'] = (array_key_exists('create_vertical_dash',     $_POST) ? 1 : 0); //true -> 1    'on' in mysql
-    $st_ds_new['draw_triangle']       = (array_key_exists('create_triangle',          $_POST) ? 1 : 0); //false -> 0   '' in mysql
-    $st_ds_new['change_color']        = $_POST['change_color']; //radio button, so will 0/1/2
+    $settings_new['draw_vertical_lines'] = (array_key_exists('create_vertical_dash',     $_POST) ? 1 : 0); //true -> 1    'on' in mysql
+    $settings_new['draw_triangle']       = (array_key_exists('create_triangle',          $_POST) ? 1 : 0); //false -> 0   '' in mysql
+    $settings_new['change_color']        = $_POST['change_color']; //radio button, so will 0/1/2
     
     //these will return either the cleaned up value, or a minimum, or maximum value, or the default (arg2)
     //If returns false, it will NOT update them, and the display creation function will continue to use the most recently saved value
     //IN FUTURE: this will be replaced with AJAX and javascript validation
     
     //NOTE: stock_ticker_validate_integer($new_val, $min_val, $max_val, $default)
-    $tmp = relevad_plugin_validate_integer($_POST['max_display'],  $st_global->validation_params['max_display'][0],  $st_global->validation_params['max_display'][1],  false);
-    if ($tmp) {
-    $st_ds_new['display_number'] = $tmp;}
+    $tmp = relevad_plugin_validate_integer($_POST['max_display'],  $validation_params['max_display'][0],  $validation_params['max_display'][1],  false);
+    if ($tmp) { $settings_new['display_number'] = $tmp; }
     
-    $tmp = relevad_plugin_validate_integer($_POST['scroll_speed'], $st_global->validation_params['scroll_speed'][0], $st_global->validation_params['scroll_speed'][1], false);
-    if ($tmp) {
-    $st_ds_new['scroll_speed']   = $tmp;}
+    $tmp = relevad_plugin_validate_integer($_POST['scroll_speed'], $validation_params['scroll_speed'][0], $validation_params['scroll_speed'][1], false);
+    if ($tmp) { $settings_new['scroll_speed']   = $tmp; }
     
-    $st_ds_new['width']  = relevad_plugin_validate_integer($_POST['width'],       $st_global->validation_params['width'][0],        $st_global->validation_params['width'][1],   $st_ds['width']);
-    $st_ds_new['height'] = relevad_plugin_validate_integer($_POST['height'],      $st_global->validation_params['height'][0],       $st_global->validation_params['height'][1],  $st_ds['height']);
+    $settings_new['width']  = relevad_plugin_validate_integer($_POST['width'],       $validation_params['width'][0],        $validation_params['width'][1],   $unchanged['width']);
+    $settings_new['height'] = relevad_plugin_validate_integer($_POST['height'],      $validation_params['height'][0],       $validation_params['height'][1],  $unchanged['height']);
     
     // VALIDATE fonts
-    $st_ds_new['font_size']   = relevad_plugin_validate_integer($_POST['font_size'],   $st_global->validation_params['font_size'][0], $st_global->validation_params['font_size'][1],  $st_ds['font_size']);
-    $st_ds_new['font_family'] = relevad_plugin_validate_font_family($_POST['font_family'], $st_ds['font_family']);
+    $settings_new['font_size']   = relevad_plugin_validate_integer($_POST['font_size'],   $validation_params['font_size'][0], $validation_params['font_size'][1],  $unchanged['font_size']);
+    $settings_new['font_family'] = relevad_plugin_validate_font_family($_POST['font_family'], $unchanged['font_family']);
     
     // VALIDATE COLORS
-    $st_ds_new['font_color'] = relevad_plugin_validate_color($_POST['text_color'],        $st_ds['font_color']);
-    $st_ds_new['bg_color']   = relevad_plugin_validate_color($_POST['background_color1'], $st_ds['bg_color']);
+    $settings_new['font_color'] = relevad_plugin_validate_color($_POST['text_color'],        $unchanged['font_color']);
+    $settings_new['bg_color']   = relevad_plugin_validate_color($_POST['background_color1'], $unchanged['bg_color']);
     
-    $st_ds_new['text_opacity'] = relevad_plugin_validate_opacity($_POST['text_opacity'],       $st_ds['text_opacity']);
-    $st_ds_new['bg_opacity']   = relevad_plugin_validate_opacity($_POST['background_opacity'], $st_ds['bg_opacity']);
+    $settings_new['text_opacity'] = relevad_plugin_validate_opacity($_POST['text_opacity'],       $unchanged['text_opacity']);
+    $settings_new['bg_opacity']   = relevad_plugin_validate_opacity($_POST['background_opacity'], $unchanged['bg_opacity']);
     
     $tmp = trim($_POST['ticker_advanced_style']); //strip spaces
     if ($tmp != '' && substr($tmp, -1) != ';') { $tmp .= ';'; } //poormans making of a css rule
-    $st_ds_new['advanced_style'] = $tmp;
+    $settings_new['advanced_style'] = $tmp;
     
     //issue warning if scaling is going to lead to overlap.
-    $minimum_width = $st_ds_new['font_size'] * 4 * 4;  //point font * 4 characters * 4 elements ~ aproximate
-    $entry_width   = $st_ds_new['width'] / $st_ds_new['display_number'];
+    $minimum_width = $settings_new['font_size'] * 4 * 4;  //point font * 4 characters * 4 elements ~ aproximate
+    $entry_width   = $settings_new['width'] / $settings_new['display_number'];
     if ($minimum_width > $entry_width) {
-        echo "<div id='sp-warning'><h1>Warning:</h1>";
-        echo "Chosen font size of " . $st_ds_new['font_size'] . " when used with width of " . $st_ds_new['width'] . " would cause overlap of text.";
-        echo "Ignoring display_number of " . $st_ds_new['display_number'] . " to compensate</div>";
+        stock_plugin_notice_helper("<b class='sp-warning'>Warning:</b> Chosen font size of {$settings_new['font_size']} when used with width of {$settings_new['width']} would cause overlap of text.<br/>Ignoring display_number of {$settings_new['display_number']} to compensate", 'error');
     }
     
-    //now merge template settings + post changes + old unchanged settings
-    sp_update_row($st_global->table_name, 'Default Settings', array_replace($st_ds, $st_ds_new, $template_settings));
+    //last handle this shortcode's stock list and name if either exist
+    if (isset($_POST['stocks_for_shortcode'])) {
+        $settings_new['stock_list'] = stock_plugin_validate_stock_list($_POST['stocks_for_shortcode']);
+    }
+    
+    if (isset($_POST['shortcode_name']) && $_POST['shortcode_name'] !== $unchanged['name']) {
+        //check if other than - and _  if the name is alphanumerics
+        if (! ctype_alnum(str_replace(array(' ', '-', '_'), '', $_POST['shortcode_name'])) ) {
+            stock_plugin_notice_helper("<b class='sp-warning'>Warning:</b> Allowed only alphanumerics and - _ in shortcode name.<br/>Name reverted!", 'error');
+        }
+        elseif (sp_name_used($_POST['shortcode_name'])) {
+            stock_plugin_notice_helper("<b class='sp-warning'>Warning:</b> Name '{$_POST['shortcode_name']}' is already in use by another shortcode<br/>Name reverted!", 'error');
+        }
+        else {
+            $settings_new['name'] = $_POST['shortcode_name'];
+        }
+        //NOTE: 50 chars limit but this will be auto truncated by mysql, and enforced by html already
+    }
+    
+    //now merge template settings > post changes > old unchanged settings in that order
+    sp_update_row(array_replace($unchanged, $settings_new, $template_settings), array('id' => $id));
 }
 
-function stock_ticker_create_ticker_config($st_ds) {
-    ?>
-        <label for="input_stock_tickerwidth">Width: </label>
-        <input  id="input_stock_tickerwidth"   name="width"   type="text" value="<?php echo $st_ds['width']; ?>" class="itxt"/>
-        <label for="input_stock_ticker_height">Height: </label>
-        <input  id="input_stock_ticker_height" name="height"  type="text" value="<?php echo $st_ds['height']; ?>" class="itxt"/>
-        
-        <br />
-        <label for="input_max_display">Number of stocks displayed on the screen at one time: </label>
-        <input  id="input_max_display"  name="max_display"   type="text" value="<?php echo $st_ds['display_number']; ?>" class="itxt" style="width:40px;" />
-        <label for="input_scroll_speed">Scroll speed (Pixels per second): </label>
-        <input  id="input_scroll_speed" name="scroll_speed"  type="text" value="<?php echo $st_ds['scroll_speed']; ?>" class="itxt" />
-        
-        <br />
-        <label for="input_background_color">Background color: </label>
-        <input  id="input_background_color" name="background_color1"     type="text" value="<?php echo $st_ds['bg_color']; ?>" class="itxt color_input" style="width:101px" />
-        <sup id="background_color_picker_help"><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" class="color_q">[?]</a></sup>
-        <script>enhanceTypeColor("input_background_color", "background_color_picker_help");</script>
-        <br />
-        <label for="input_background_opacity">Background opacity<span id="background_opacity_val0"> (0-1)</span>: </label>
-        <span id="background_opacity_val1"></span>
-        <input  id="input_background_opacity" name="background_opacity"  type="text" value="<?php echo $st_ds['bg_opacity']; ?>" class="itxt"/>
-        <span id="background_opacity_val2"></span>
-        <script>enhanceTypeRange("input_background_opacity", "background_opacity_val");</script> 
-    <?php
+function stock_ticker_create_name_field($shortcode_settings) {
+    echo "<label for='input_shortcode_name'>Shortcode Name:</label> <sub>(limit 50 chars) (alphanumeric and - and _ only)</sub><br/>
+    <input id='input_shortcode_name' name='shortcode_name' type='text' maxlength='50' value='{$shortcode_settings['name']}' class='shortcode_name'/>";
 }
 
-function stock_ticker_create_text_config($st_ds) {
+function stock_ticker_create_ticker_config($shortcode_settings) {
+
+    echo <<< HEREDOC
+    <label for="input_stock_tickerwidth">Width: </label>
+    <input  id="input_stock_tickerwidth"   name="width"   type="text" value="{$shortcode_settings['width']}" class="itxt"/>
+    <label for="input_stock_ticker_height">Height: </label>
+    <input  id="input_stock_ticker_height" name="height"  type="text" value="{$shortcode_settings['height']}" class="itxt"/>
+    
+    <br />
+    <label for="input_max_display">Number of stocks displayed on the screen at one time: </label>
+    <input  id="input_max_display"  name="max_display"   type="text" value="{$shortcode_settings['display_number']}" class="itxt" style="width:40px;" />
+    <label for="input_scroll_speed">Scroll speed (Pixels per second): </label>
+    <input  id="input_scroll_speed" name="scroll_speed"  type="text" value="{$shortcode_settings['scroll_speed']}" class="itxt" />
+    
+    <br />
+    <label for="input_background_color">Background color: </label>
+    <input  id="input_background_color" name="background_color1"     type="text" value="{$shortcode_settings['bg_color']};" class="itxt color_input" style="width:101px" />
+    <sup id="background_color_picker_help"><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" class="color_q">[?]</a></sup>
+    <script>enhanceTypeColor("input_background_color", "background_color_picker_help");</script>
+    <br />
+    <label for="input_background_opacity">Background opacity<span id="background_opacity_val0"> (0-1)</span>: </label>
+    <span id="background_opacity_val1"></span>
+    <input  id="input_background_opacity" name="background_opacity"  type="text" value="{$shortcode_settings['bg_opacity']}" class="itxt"/>
+    <span id="background_opacity_val2"></span>
+    <script>enhanceTypeRange("input_background_opacity", "background_opacity_val");</script> 
+HEREDOC;
+
+}
+
+function stock_ticker_create_text_config($shortcode_settings) {
         $default_fonts = array("Arial", "cursive", "Gadget", "Georgia", "Impact", "Palatino", "sans-serif", "serif", "Times");
-    ?>
+
+    echo <<< HEREDOC
         <label for="input_text_color">Text color: </label>
-        <input  id="input_text_color" name="text_color"     type="text"  value="<?php echo $st_ds['font_color']; ?>" class="itxt color_input" style="width:101px" />
+        <input  id="input_text_color" name="text_color"     type="text"  value="{$shortcode_settings['font_color']}" class="itxt color_input" style="width:101px" />
     <sup id="text_color_picker_help"><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" class="color_q">[?]</a></sup>
         
-        <script>enhanceTypeColor("input_text_color", "text_color_picker_help");</script>
+        <script type="text/javascript">enhanceTypeColor("input_text_color", "text_color_picker_help");</script>
         
         <label for="input_font_size">Font size: </label>
-        <input  id="input_font_size" name="font_size"       type="text"  value="<?php echo $st_ds['font_size']; ?>" class="itxt"   style="width:40px;" />
+        <input  id="input_font_size" name="font_size"       type="text"  value="{$shortcode_settings['font_size']}" class="itxt"   style="width:40px;" />
         <br/>
         
         <label for="input_text_opacity">Text opacity<span id="text_opacity_val0"> (0-1)</span>: </label>
         <span id="text_opacity_val1"></span>
-        <input  id="input_text_opacity" name="text_opacity"  type="text" value="<?php echo $st_ds['text_opacity']; ?>" class="itxt"/>
+        <input  id="input_text_opacity" name="text_opacity"  type="text" value="{$shortcode_settings['text_opacity']}" class="itxt"/>
         <span id="text_opacity_val2"></span>
         
-        <script>enhanceTypeRange("input_text_opacity", "text_opacity_val");</script> 
+        <script type="text/javascript">enhanceTypeRange("input_text_opacity", "text_opacity_val");</script> 
         
         <br/>
         <label for="input_font_family">Font family: </label>
-        <input  id="input_font_family" name="font_family" list="font_family" value="<?php echo $st_ds['font_family']; ?>" autocomplete="on" style="width:125px" />
+        <input  id="input_font_family" name="font_family" list="font_family" value="{$shortcode_settings['font_family']}" autocomplete="on" style="width:125px" />
         <datalist id="font_family"><!-- used as an "autocomplete dropdown" within the input text field -->
-        <?php  //Any real reason to not use a regular dropdown instead?
-            foreach($default_fonts as $font) {
-                echo "<option value='{$font}'></option>";
-            }
-        ?>
-        </datalist>
-    <?php
+HEREDOC;
+    //Any real reason to not use a regular dropdown instead?
+    foreach($default_fonts as $font) {
+        echo "<option value='{$font}'></option>";
+    }
+
+    echo "</datalist>";
 }
 
 //generates all of the checkboxes in the admin page
-function stock_ticker_create_display_config($st_ds) {
+function stock_ticker_create_display_config($shortcode_settings) {
     ?>
-    <input  id="input_create_vertical_dash"    name="create_vertical_dash"    type="checkbox" <?php checked($st_ds['draw_vertical_lines']); ?>>
+    <input  id="input_create_vertical_dash"    name="create_vertical_dash"    type="checkbox" <?php checked($shortcode_settings['draw_vertical_lines']); ?>>
     <label for="input_create_vertical_dash">Draw vertical lines</label>
     <br/>
 
-    <input  id="input_create_triangle"         name="create_triangle"         type="checkbox" <?php checked($st_ds['draw_triangle']);?>>
+    <input  id="input_create_triangle"         name="create_triangle"         type="checkbox" <?php checked($shortcode_settings['draw_triangle']);?>>
     <label for="input_create_triangle">Draw triangle</label>
     <br/>
 
     <span title="off=no color change  on=change colors for +/- values only   all=change color for all stock values">Change color (green+ red- gray):</span><br/>
-    <input id="input_change_color_off" name="change_color" value="0" type="radio" <?php checked(0, $st_ds['change_color']);?>>Off
-    <input id="input_change_color_on"  name="change_color" value="1" type="radio" <?php checked(1, $st_ds['change_color']);?>>On
-    <input id="input_change_color_all" name="change_color" value="2" type="radio" <?php checked(2, $st_ds['change_color']);?>>All
+    <input id="input_change_color_off" name="change_color" value="0" type="radio" <?php checked(0, $shortcode_settings['change_color']);?>>Off
+    <input id="input_change_color_on"  name="change_color" value="1" type="radio" <?php checked(1, $shortcode_settings['change_color']);?>>On
+    <input id="input_change_color_all" name="change_color" value="2" type="radio" <?php checked(2, $shortcode_settings['change_color']);?>>All
 <?php
 }
 
 
-function stock_ticker_create_style_field($st_ds) {
-    $AS    = $st_ds['advanced_style'];
+function stock_ticker_create_style_field($shortcode_settings) {
     echo "<p>If you have additional CSS rules you want to apply to the entire ticker (such as alignment or borders) you can add them below.</p>
           <p> Example: <code>margin:auto; border:1px solid #000000;</code></p>
-          <input id='input_ticker_advanced_style' name='ticker_advanced_style' type='text' value='{$AS}' class='itxt' style='width:90%; text-align:left;' />";
+          <input id='input_ticker_advanced_style' name='ticker_advanced_style' type='text' value='{$shortcode_settings['advanced_style']}' class='itxt' style='width:90%; text-align:left;' />";
 
 }
 
