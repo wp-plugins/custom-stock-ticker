@@ -1,6 +1,6 @@
 === Custom Stock Ticker ===
 Contributors: Relevad
-Tags: stock ticker, stocks, ticker, stock market, stock price, share prices, market changes, trading, finance, financial
+Tags: custom stock ticker, stock ticker, stocks, ticker, stock market, stock price, share prices, market changes, trading, finance, financial
 Requires at least: 3.8.0
 Tested up to: 4.1
 Stable tag: 1.4.1
