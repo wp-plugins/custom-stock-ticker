@@ -65,7 +65,7 @@ color: gray;
     100% { transform: translateX(-100%); }
 }
 
-.ticker-wrapper:hover .scrolling-ticker-class {
+.ticker-wrapper:hover .css3-ticker-scroll{  /* later, we can add a separate class for this that will be added when pause is on */
 	-webkit-animation-play-state: paused;
     -moz-animation-play-state: paused;
 	animation-play-state: paused;

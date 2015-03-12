@@ -687,15 +687,15 @@ function stock_ticker_create_ticker_config($shortcode_settings) {
     
     <br />
     <label for="input_background_color">Background color: </label>
-    <input  id="input_background_color" name="background_color1"     type="text" value="{$shortcode_settings['bg_color']};" class="itxt color_input" style="width:101px" />
+    <input  id="input_background_color" name="background_color1"     type="text" value="{$shortcode_settings['bg_color']}" class="itxt color_input" style="width:101px" />
     <sup id="background_color_picker_help"><a href="http://www.w3schools.com/tags/ref_colorpicker.asp" ref="external nofollow" target="_blank" title="Use hex to pick colors!" class="color_q">[?]</a></sup>
-    <script>enhanceTypeColor("input_background_color", "background_color_picker_help");</script>
+    <script type="text/javascript">enhanceTypeColor("input_background_color", "background_color_picker_help");</script>
     <br />
     <label for="input_background_opacity">Background opacity<span id="background_opacity_val0"> (0-1)</span>: </label>
     <span id="background_opacity_val1"></span>
     <input  id="input_background_opacity" name="background_opacity"  type="text" value="{$shortcode_settings['bg_opacity']}" class="itxt"/>
     <span id="background_opacity_val2"></span>
-    <script>enhanceTypeRange("input_background_opacity", "background_opacity_val");</script> 
+    <script type="text/javascript">enhanceTypeRange("input_background_opacity", "background_opacity_val");</script> 
 HEREDOC;
 
 }

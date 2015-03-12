@@ -146,7 +146,8 @@ function stock_ticker_create_css_header($entry_width, $shortcode_settings, $num_
     $triangle_top_position  = round(($height / 2) - ($triangle_size / 2), 0, PHP_ROUND_HALF_DOWN);     //center the triangle on the line
     
     $vbar_height = round($height * 0.7,                0, PHP_ROUND_HALF_DOWN); //used for the vertical bar only
-    $vbar_top    = round(($height - $vbar_height) / 2, 0, PHP_ROUND_HALF_DOWN); 
+    //$vbar_top    = round(($height - $vbar_height) / 2, 0, PHP_ROUND_HALF_DOWN); //no longer used   was for    '.stock_ticker_vertical_line top:    {$vbar_top}px;'
+    $vbar_m_bottom = $height - $vbar_height;
     //NOTE: stock_ticker_{$id} is actually a class, so we can properly have multiple per page, IDs would have to be globally unique
     $animation_time = $entry_width / $scroll_speed * $num_displayed_stocks;
     $slider_width = $entry_width * $num_displayed_stocks;
@@ -193,18 +194,18 @@ function stock_ticker_create_css_header($entry_width, $shortcode_settings, $num_
    border-bottom: {$triangle_size}px solid green;
 }
 .stock_ticker_{$id} .stock_ticker_vertical_line {
-   height: {$vbar_height}px;
-   top:    {$vbar_top}px;
+   height:         {$vbar_height}px;
+   margin-bottom: -{$vbar_m_bottom}px;
 }
 
-.ticker-wrapper {
+.stock_ticker_{$id} .ticker-wrapper {
     width: {$double_slider_width}px;            /*The wrapper needs to be AT LEAST this wide to prevent wrapping. Wider is fine. */
 }
 
-.scrolling-ticker-class {
+.stock_ticker_{$id} .css3-ticker-scroll {
     position:relative;
     float:left;
-    width:auto;
+    /* width:auto;    This was here for a good reason at one point but I don't remember why, so commenting out for now */
     -webkit-animation: marquee {$animation_time}s linear infinite;
     -moz-animation: marquee {$animation_time}s linear infinite; 
     animation: marquee {$animation_time}s linear infinite;      /*Assign the animation to the main ticker container*/
@@ -240,10 +241,10 @@ function stock_ticker_create_ticker($entry_width, $shortcode_settings, $data_lis
 return <<<STC
                 <div class="stock_ticker stock_ticker_{$id}">
                     <div class="ticker-wrapper">
-                        <div class="stock_ticker_slider" id="ticker-object-main">
+                        <div class="stock_ticker_slider ticker-main">
                                 {$stock_entries}
                         </div>
-                        <div class="stock_ticker_slider" id="ticker-object-second">
+                        <div class="stock_ticker_slider ticker-second">
                                 {$stock_entries}
                         </div><!-- end slider -->
                     </div>
