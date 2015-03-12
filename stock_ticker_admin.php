@@ -36,10 +36,10 @@ global $relevad_plugins;
 if (!is_array($relevad_plugins)) {
     $relevad_plugins = array();
 }
-    $relevad_plugins[] = array(
-    'url'  => '/wp-admin/admin.php?page=stock_ticker_list',
-    'name' => 'Custom Stock Ticker'
-    );
+$relevad_plugins[] = array(
+'url'  => admin_url('admin.php?page=stock_ticker_list'),
+'name' => 'Custom Stock Ticker'
+);
 
 //NOTE: These will automatically be within the namespace
 define(NS.'SP_TABLE_NAME', $wpdb->prefix . 'stock_tickers');
@@ -61,10 +61,10 @@ DEFINE
 // Feature Improvement: think about putting each individual config into a class, does that buy us anything?
 // http://stackoverflow.com/questions/1957732/can-i-include-code-into-a-php-class
 
-include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_plugin_utils.php'; //used to contain validation functions
-include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/relevad_plugin_utils.php';
-include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_plugin_cache.php';
-include WP_CONTENT_DIR . '/plugins/custom-stock-ticker/stock_ticker_display.php';
+include plugin_dir_path(__FILE__) . 'stock_plugin_utils.php'; //used to contain validation functions
+include plugin_dir_path(__FILE__) . 'relevad_plugin_utils.php';
+include plugin_dir_path(__FILE__) . 'stock_plugin_cache.php';
+include plugin_dir_path(__FILE__) . 'stock_ticker_display.php';
 
 function stock_ticker_create_db_table() {  //NOTE: for brevity into a function
     $table_name = SP_TABLE_NAME;

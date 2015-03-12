@@ -96,7 +96,10 @@ Yes. Put in a smaller number in the width under Ticker Settings (Settings->Stock
 
 = Something's not working or I found a bug. What do I do? =
 
-Email us at stock-ticker AT relevad DOT com or go to the support section of this plugin on wordpress.org.
+First, please make sure that all Relevad Plugins (including Fit-My-Sidebar) are updated to the latest version.
+If updating does not resolve your issue please contact plugins AT relevad DOT com
+or
+find this plugin on wordpress.org and contact us through the support tab.
 
 
 == Screenshots ==
