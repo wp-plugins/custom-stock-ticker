@@ -1,9 +1,10 @@
 === Custom Stock Ticker ===
+
 Contributors: Relevad
 Tags: custom stock ticker, stock ticker, stocks, ticker, stock market, stock price, share prices, market changes, trading, finance, financial
 Requires at least: 3.8.0
-Tested up to: 4.1
-Stable tag: 1.4.1
+Tested up to: 4.1.1
+Stable tag: 2.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,6 +56,7 @@ This plugin was developed by Relevad Corporation. Authors: Artem Skorokhodov, Ma
 == Frequently Asked Questions ==
 
 = Can I get data for any company? =
+
 The current version of the plugin supports almost all stocks on NASDAQ and NYSE.
 
 = How do I add stocks to the ticker? =
@@ -64,6 +66,7 @@ Go to Settings -> StockTicker
 Type in your stock list separated by commas in the Stocks input box.
 
 = How do I place the ticker into a widget? =
+
 You need a plugin that enables shortcode or PHP widgets.
 
 There are plenty of such plugins on the WordPress.org. 
@@ -83,15 +86,11 @@ If you want to display a different set of stocks for specific categories on your
 
 = Can I place two tickers with different formatting on one page? =
 
-----Depricated support-----
-Yes, however if you want to place stock tickers with different formatting on a single page or if you think your site will ever display two different tickers on the same page, you must give each ticker its own ID in the shortcode. 
-
-For example: `[stock-ticker id="example_id_01" display="3" width="800" height="40" background_color="black" text_color="yellow" scroll_speed="60"]`
-
+Yes, simply create a new shortcode from the shortcodes list table page (click add new), then place it's shortcode onto the page where ever you want. Each shortcode can be formatted completel independently and even have their own individuallized stock lists.
 
 = The ticker is too big! Is there some way to shrink it? =
-Yes. Put in a smaller number in the width under Ticker Settings (Settings->Stock Ticker). Width is in pixels. 
 
+Yes. Put in a smaller number in the width under Ticker Settings (Settings->Stock Ticker). Width is in pixels. 
 
 
 = Something's not working or I found a bug. What do I do? =
@@ -115,6 +114,10 @@ Email us at stock-ticker AT relevad DOT com or go to the support section of this
 
 
 == Changelog ==
+
+= 2.0 =
+
+* Added functionality to define multiple completely distinct shortcodes. Full style customization and stock lists avaialble.
 
 = 1.4.1 =
 
@@ -180,10 +183,11 @@ Email us at stock-ticker AT relevad DOT com or go to the support section of this
 * Numerous minor bug fixes
 
 = 1.0 =
+
 Plugin released.
 
 == Upgrade Notice ==
 
-= 1.4 =
+= 1.4.1 =
  
-Update to get latest fixes and stability improvements
+Major functionality upgrade. Update now to be able to define multiple shortcodes with independent stock lists for each.
