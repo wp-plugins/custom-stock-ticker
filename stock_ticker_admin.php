@@ -153,6 +153,7 @@ function stock_ticker_handle_update() {
             $default_settings = get_option('stock_ticker_default_settings', false);
             if ($default_settings !== false) {
                 $default_settings['name'] = 'Default Settings';
+                $default_settings['id']   = 1; //force the ID to be 1
                 if (false !== sp_add_row($default_settings))
                     delete_option('stock_ticker_default_settings');
             }
