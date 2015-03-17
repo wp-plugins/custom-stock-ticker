@@ -149,9 +149,15 @@ function stock_ticker_handle_update() {
         case '1.3.5':
             stock_ticker_create_db_table(); //Added table storage structure in 1.4
 
-            $default_settings['name'] = 'Default Settings';
-            if (false !== sp_add_row($default_settings))
-                delete_option('stock_ticker_default_settings');
+            $default_settings = get_option('stock_ticker_default_settings', false);
+            if ($default_settings !== false) {
+                $default_settings['name'] = 'Default Settings';
+                if (false !== sp_add_row($default_settings))
+                    delete_option('stock_ticker_default_settings');
+            }
+            else {
+                stock_ticker_activate(); //Recall the activate function and this problem should be fixed
+            }
             
         case '1.4':
             stock_ticker_create_db_table(); //bugfix for table storage in 1.4.1
