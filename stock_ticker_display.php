@@ -308,12 +308,12 @@ function stock_ticker_create_entry($stock_data, $shortcode_settings) {
         }
         //index 2 represents the last value of the stock
         if($display_data[2]==1){
-                $data_item = round($stock_data['last_val'], 2);
+                $data_item = round($stock_data['last_val'], 3); //yahoo gives 3 decimal places precision
                 $output .= "<div class='stock_ticker_element {$text_color}'>{$data_item}</div><!-- \n -->";                
         }
         //index 3 represents the value of the change
         if($display_data[3]==1){
-                $data_item = round((float)$stock_data['change_val'], 2);
+                $data_item = round((float)$stock_data['change_val'], 3);
                 if ($data_item == 0) { $data_item = '0.00'; } //give it 2 decimal places
 
                 $text_color = ($change_all || $color_change) ? $color_class : '';  //NOTE: this carries through into #4
@@ -323,7 +323,7 @@ function stock_ticker_create_entry($stock_data, $shortcode_settings) {
         if($display_data[4]==1) {
                 $data_item = str_replace('%', '', $stock_data['change_percent']);
                 if ($data_item == '0') { $data_item = '0.00';  } //give it 2 decimal places
-                else                   { round((float)$data_item, 2); } //looks like this give it a + sign so that we don't need $text_plus
+                else                   { round((float)$data_item, 3); } //looks like this give it a + sign so that we don't need $text_plus
 
                 $output .= "<div class='stock_ticker_element {$text_color}'>{$data_item}%</div><!-- \n -->";
         }

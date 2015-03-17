@@ -24,6 +24,9 @@ Features:
  * CSS input for entire widget (allows for alignment, borders, margins, padding, etc.)
  * Custom stocks for specific categories
  * Preview of Stock Ticker after saving on settings page
+ 
+Depricated support for pre-defined html colors:
+ * Color strings such as blue, yellow, limegreen could be used in old version of this plugin. These are no longer supported and may be lost upon saving settings.
 
 Requirements:
 

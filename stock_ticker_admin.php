@@ -113,6 +113,7 @@ function stock_ticker_activate() {
         //if neither of these exist then assume initial install
         stock_ticker_create_db_table();
         $values = array( //NOTE: the rest should all be the defaults
+                        'id'             => 1, //explicitly set this or else mysql configs where the default is not 1 will be broken
                         'name'           => 'Default Settings',
                         'advanced_style' => 'margin: auto;'
                         );
