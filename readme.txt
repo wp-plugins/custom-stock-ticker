@@ -4,7 +4,7 @@ Contributors: Relevad
 Tags: custom stock ticker, stock ticker, stocks, ticker, stock market, stock price, share prices, market changes, trading, finance, financial
 Requires at least: 3.8.0
 Tested up to: 4.1.1
-Stable tag: 2.0
+Stable tag: 2.0.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -121,6 +121,13 @@ find this plugin on wordpress.org and contact us through the support tab.
 
 
 == Changelog ==
+
+= 2.0.1 =
+
+* Changed precision to 3 decimal places up from 2
+* Bugfix with Upgrade path from earlier versions
+* Bugfix when database tables do not use default auto-increment config
+* Bugfix for wordpress plugin standards and best practices
 
 = 2.0 =
 
