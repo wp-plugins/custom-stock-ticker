@@ -461,9 +461,11 @@ HEREDOC;
                     </div>
                 </div>
             </div>
-            <input type='submit' name='save_changes'  value='Save'              class='button-primary' />
-            <input type='submit' name='reset_options' value='{$reset_btn}' class='button-primary' />
-            {$reset_notice}
+            <div id='publishing-actions'>
+                <input type='submit' name='save_changes'  value='Save'              class='button-primary' />
+                <input type='submit' name='reset_options' value='{$reset_btn}' class='button-primary' />
+                {$reset_notice}
+            </div>
          </div>
     
          <div id='sp-cat-stocks-div' class='postbox-container sp-options'>

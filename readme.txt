@@ -113,11 +113,13 @@ find this plugin on wordpress.org and contact us through the support tab.
 
 3. More examples of stock ticker themes
 
-4. This is what the back-end looks like
+4. Here is where you can manage multiple tickers
 
-5. Here's how to place the ticker on the site using a PHP Code Widget
+5. This is what the admin panel looks like
 
-6. Here's how to place the ticker inside a page using shortcode
+6. Here's how to place the ticker on the site using a PHP Code Widget
+
+7. Here's how to place the ticker inside a page using shortcode
 
 
 == Changelog ==
