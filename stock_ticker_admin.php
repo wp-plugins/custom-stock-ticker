@@ -95,7 +95,7 @@ function stock_ticker_create_db_table() {  //NOTE: for brevity into a function
     UNIQUE KEY name (name),
     PRIMARY KEY (id)
     ) {$charset};";
-    
+    //NOTE: display_number is depricated. remove later?
     //NOTE: Extra spaces for readability screw up dbDelta, so we remove those
     $sql = preg_replace('/ +/', ' ', $sql);
     //NOTE: WE NEED 2 spaces exactly between PRIMARY KEY and its definition.
@@ -118,7 +118,7 @@ function stock_ticker_activate() {
                         'advanced_style' => 'margin: auto;'
                         );
         sp_add_row($values);
-        add_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL'));
+        add_option('stock_ticker_per_category_stock_lists', array('default' => '^GSPC,^IXIC,^NYA,MMM,AXP,T,BA,CAT,CVX,CSCO,KO,DD,XOM,GE,GS,HD,INTC,IBM,JNJ,JPM,MCD,MRK,MSFT,NKE,PFE,PG,TRV,UNH,UTX,VZ,V,WMT,DIS'));
         add_option('stock_ticker_version',                         $current_version);
         add_option('stock_ticker_version_text', "Initial install v{$current_version}");
     }
@@ -243,7 +243,7 @@ add_filter('set-screen-option', NS.'stock_ticker_set_screen_option', 10, 3);
 //ON default settings, should restore to defaults
 //ON other shortcodes, should just reload the page
 function stock_ticker_reset_options() {
-    update_option('stock_ticker_per_category_stock_lists', array('default' => 'GOOG,YHOO,AAPL')); //Important no spaces  
+    update_option('stock_ticker_per_category_stock_lists', array('default' => '^GSPC,^IXIC,^NYA,MMM,AXP,T,BA,CAT,CVX,CSCO,KO,DD,XOM,GE,GS,HD,INTC,IBM,JNJ,JPM,MCD,MRK,MSFT,NKE,PFE,PG,TRV,UNH,UTX,VZ,V,WMT,DIS')); //Important no spaces  
    
     $stock_ticker_default_settings = Array(
         //'name'                  => 'Default Settings', //redundant
@@ -259,7 +259,6 @@ function stock_ticker_reset_options() {
         'font_size'             => 12,
         'font_family'           => 'Arial',
         'scroll_speed'          => 60,
-        'display_number'        => 2,
         'advanced_style'        => 'margin:auto;',
         'draw_vertical_lines'   => true,
         'draw_triangle'         => true,
@@ -388,7 +387,7 @@ function stock_ticker_admin_page($id = '') {
     if (isset($_POST['save_changes'])) {
         if ($ds_flag) stock_plugin_update_per_category_stock_lists();
         stock_ticker_update_display_options($id); //pass in the unchanged settings
-        stock_plugin_notice_helper("Changes saved (Random: ".rand().")"); //Remove after tracker #23768
+        stock_plugin_notice_helper("Changes saved");
     }
     elseif (isset($_POST['reset_options'])) {
         if ($ds_flag)
@@ -479,9 +478,7 @@ HEREDOC;
                              When a page loads with a ticker, the stocks list of the category of that page is loaded. 
                              If that category has no stocks associated with it, the default list is loaded.
                          </p>
-                         <p>For Nasdaq, use <code>^IXIC</code>. For S&amp;P500, use <code>^GSPC</code>. Unfortunately, DOW is currently not available.</p>
-                         <p>Here are some example stocks you can try:<br/>
-                         BAC, CFG, AAPL, YHOO, SIRI, VALE, QQQ, GE, MDR, RAD, BABA, SUNE, FB, BBRY, MSFT, MU, PFE, F, GOOG</p>"; 
+                         <p>For Nasdaq, use <code>^IXIC</code>. For S&amp;P500, use <code>^GSPC</code>. For NYSE Composite use <code>^NYA</code>. Unfortunately, DOW is currently not available.</p>"; 
                         if ($ds_flag) stock_plugin_create_per_category_stock_lists();
                         else          stock_plugin_create_stock_list_section($shortcode_settings);
     echo "           </div>
@@ -501,7 +498,7 @@ HEREDOC;
                <p>Based on the last saved settings, this is what the shortcode <code>[stock-ticker{$the_name}]</code> will generate:</p>
 HEREDOC;
 
-    echo do_shortcode("[stock-ticker{$the_name}]"); //Feature Improvement: see tracker #22775
+    echo do_shortcode("[stock-ticker{$the_name}]");
     echo <<<HEREDOC
                <p>To preview your latest changes you must first save changes.</p>
             </div>
@@ -623,9 +620,7 @@ function stock_ticker_update_display_options($id) {
     //IN FUTURE: this will be replaced with AJAX and javascript validation
     
     //NOTE: stock_ticker_validate_integer($new_val, $min_val, $max_val, $default)
-    $tmp = relevad_plugin_validate_integer($_POST['max_display'],  $validation_params['max_display'][0],  $validation_params['max_display'][1],  false);
-    if ($tmp) { $settings_new['display_number'] = $tmp; }
-    
+        
     $tmp = relevad_plugin_validate_integer($_POST['scroll_speed'], $validation_params['scroll_speed'][0], $validation_params['scroll_speed'][1], false);
     if ($tmp) { $settings_new['scroll_speed']   = $tmp; }
     
@@ -646,13 +641,6 @@ function stock_ticker_update_display_options($id) {
     $tmp = trim($_POST['ticker_advanced_style']); //strip spaces
     if ($tmp != '' && substr($tmp, -1) != ';') { $tmp .= ';'; } //poormans making of a css rule
     $settings_new['advanced_style'] = $tmp;
-    
-    //issue warning if scaling is going to lead to overlap.
-    $minimum_width = $settings_new['font_size'] * 4 * 4;  //point font * 4 characters * 4 elements ~ aproximate
-    $entry_width   = $settings_new['width'] / $settings_new['display_number'];
-    if ($minimum_width > $entry_width) {
-        stock_plugin_notice_helper("<b class='sp-warning'>Warning:</b> Chosen font size of {$settings_new['font_size']} when used with width of {$settings_new['width']} would cause overlap of text.<br/>Ignoring display_number of {$settings_new['display_number']} to compensate", 'error');
-    }
     
     //last handle this shortcode's stock list and name if either exist
     if (isset($_POST['stocks_for_shortcode'])) {
@@ -691,8 +679,6 @@ function stock_ticker_create_ticker_config($shortcode_settings) {
     <input  id="input_stock_ticker_height" name="height"  type="text" value="{$shortcode_settings['height']}" class="itxt"/>
     
     <br />
-    <label for="input_max_display">Number of stocks displayed on the screen at one time: </label>
-    <input  id="input_max_display"  name="max_display"   type="text" value="{$shortcode_settings['display_number']}" class="itxt" style="width:40px;" />
     <label for="input_scroll_speed">Scroll speed (Pixels per second): </label>
     <input  id="input_scroll_speed" name="scroll_speed"  type="text" value="{$shortcode_settings['scroll_speed']}" class="itxt" />
     

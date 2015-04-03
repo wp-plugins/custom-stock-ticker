@@ -8,33 +8,38 @@
 }
 
 .stock_ticker_slider{
-	position:absolute;
+        width:auto;
+        position:relative;
+        display:inline-block;
 	background-color: transparent;
 }
 
 .stock_ticker_entry{
-        position: absolute;
+        position: relative;
+        float:left;
+        width:auto;
 }
 
 .stock_ticker_element{
+	margin: 0px 0.3em;
 	display: inline-block;
 	text-align: center;
+        width: auto;
 }
 
  .stock_ticker_triangle{
-	margin:0px;
+	margin: 0px 0.3em;
 	width: 0px;
 	height: 0px;
 	display: inline-block;
  }
 
  .stock_ticker_vertical_line{
+        margin: 0px 0.5em;
 	position: relative;	
- 	background-color:#D7D7D7;
+        border-left: 2px solid gray;
  	opacity:0.3;
- 	width:2px;
 	display: inline-block;
-	left: 5px;
  }
 
 .stock_ticker_triangle.st_gray {
@@ -42,30 +47,44 @@
 }
 
 .stock_ticker .st_red {
-color: red;
+    color: red;
 }
 .stock_ticker .st_green {
-color: green;
+    color: green;
 }
 .stock_ticker .st_gray {
-color: gray;
+    color: gray;
 }
 
 /* keyframes are defined here because firefox has a bug wherein keyframes don't work in scoped CSS & wanted to keep them together */
 @-webkit-keyframes marquee {
-    0%   { transform: translateX(0px); }    /*Start the animation at the left */
-    100% { transform: translateX(-100%); }  /*Loop the ticker once it has scrolled 100% of its entire width */
+    0%   { -webkit-transform: translateX(0px); }    /*Start the animation at the left */
+    100% { -webkit-transform: translateX(-100%); }  /*Loop the ticker once it has scrolled 100% of its entire width */
 }
 @-moz-keyframes marquee {
-    0%   { transform: translateX(0px); }
-    100% { transform: translateX(-100%); }
+    0%   { -moz-transform: translateX(0px); }
+    100% { -moz-transform: translateX(-100%); }
 }
 @keyframes marquee {
     0%   { transform: translateX(0px); }
     100% { transform: translateX(-100%); }
 }
 
-.ticker-wrapper:hover .css3-ticker-scroll{  /* TODO - later, we can add a separate class for this that will be added when pause is on */
+.css3-ticker-scroll {
+    position:relative;
+    float:left;
+    -webkit-animation-name: marquee;
+    -webkit-animation-timing-function: linear;
+    -webkit-animation-iteration-count: infinite;
+    -moz-animation-name: marquee;
+    -moz-animation-timing-function: linear;
+    -moz-animation-iteration-count: infinite;
+    animation-name: marquee;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+.ticker-wrapper:hover .css3-ticker-scroll{  /* TODO - later, maybe we can add a separate class for this that will be added when pause is on */
 	-webkit-animation-play-state: paused;
     -moz-animation-play-state: paused !important; /* firefox doesn't listen to this unless it is important */
 	animation-play-state: paused;

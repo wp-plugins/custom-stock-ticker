@@ -94,34 +94,21 @@ function stock_ticker($atts) { //attributes are whats include between the [] of 
     $tmp = stock_plugin_get_data(array_unique($stock_list)); //from stock_plugin_cache.php, expects an array or string | separated
     $stock_data_list = array_values($tmp['valid_stocks']);   //NOTE: its ok to throw away the keys, they aren't used anywhere
     
+        
     if (empty($stock_data_list)) {
         return "<!-- WARNING: no stock list found {$cats_used} -->";  //don't fail completely silently
     }
     
-    $num_ticker_to_display = $shortcode_settings['display_number'];
     $width                 = $shortcode_settings['width'];
-    $entry_width           = $width / $num_ticker_to_display;
-    
-    //****** fix scaling *******
-    //this section is to fix the width/height attributes so that incase the ticker would have had overlapping text, it fixes itself to a minimum acceptable level
-    $minimum_width = $shortcode_settings['font_size'] * 4 * 4;  //point font * 4 characters * 4 elements ~ aproximate
-    $entry_width = max($minimum_width, $entry_width); //NOTE: warning issued in admin config update options
-    //****** end fix scaling ******* 
-    
-    //NOTE: To make scrolling smooth, we want the number of stocks to always be greater than the number to be displayed simultaniously on the page
-    $tmp = $stock_data_list; //holding for use within whileloop
-    while ($num_ticker_to_display >= count($stock_data_list)) { 
-        $stock_data_list = array_merge($tmp, $stock_data_list); //This should increase the length of stock_data_list to an even multiple of its original length
-    }
-    
-    $output  = stock_ticker_create_css_header($entry_width, $shortcode_settings, count($stock_data_list));
-    $output .= stock_ticker_create_ticker    ($entry_width, $shortcode_settings, $stock_data_list);
+        
+    $output  = stock_ticker_create_css_header($shortcode_settings, count($stock_data_list));
+    $output .= stock_ticker_create_ticker    ($shortcode_settings, $stock_data_list);
 
     return $output;
 }
 
 //Creates the internal style sheet for all of the various elements.
-function stock_ticker_create_css_header($entry_width, $shortcode_settings, $num_displayed_stocks) {
+function stock_ticker_create_css_header($shortcode_settings, $num_displayed_stocks) {
     
     $id           = $shortcode_settings['id'];
     $width        = $shortcode_settings['width'];
@@ -129,13 +116,9 @@ function stock_ticker_create_css_header($entry_width, $shortcode_settings, $num_
     $text_color   = $shortcode_settings['font_color'];
     $bgcolor      = $shortcode_settings['bg_color'];
     $scroll_speed = $shortcode_settings['scroll_speed'];
-    
+    $font_size    = $shortcode_settings['font_size'];
     $number_of_values = array_sum($shortcode_settings['data_display']);
-    if ($shortcode_settings['draw_triangle'] == 1) {
-            $element_width = round(($entry_width - 20) / $number_of_values, 0, PHP_ROUND_HALF_DOWN);
-    } else {
-            $element_width = round($entry_width / $number_of_values,        0, PHP_ROUND_HALF_DOWN);
-    }
+
     //variables to be used inside the heredoc
     //NOTE: entries are an individual stock with multiple elements
     //NOTE: elements are pieces of an entry, EX.  ticker_name & price are each elements
@@ -146,47 +129,43 @@ function stock_ticker_create_css_header($entry_width, $shortcode_settings, $num_
     $triangle_top_position  = round(($height / 2) - ($triangle_size / 2), 0, PHP_ROUND_HALF_DOWN);     //center the triangle on the line
     
     $vbar_height = round($height * 0.7,                0, PHP_ROUND_HALF_DOWN); //used for the vertical bar only
-    //$vbar_top    = round(($height - $vbar_height) / 2, 0, PHP_ROUND_HALF_DOWN); //no longer used   was for    '.stock_ticker_vertical_line top:    {$vbar_top}px;'
-    $vbar_m_bottom = $height - $vbar_height;
     //NOTE: stock_ticker_{$id} is actually a class, so we can properly have multiple per page, IDs would have to be globally unique
-    $animation_time = $entry_width / $scroll_speed * $num_displayed_stocks;
-    $slider_width = $entry_width * $num_displayed_stocks;
-    $double_slider_width = ($slider_width * 2) + 20;    // 20 extra px added just in case
     return <<<HEREDOC
+<p style="display:none"></p> <!-- This is a bugfix to prevent wordpress from sticking this stylesheet inside a p tag in posts -->
 <style type="text/css" scoped>
 .stock_ticker_{$id} {
    opacity:          0;
    width:            {$width}px;
    height:           {$height}px;
+   line-height:      {$height}px;
+   font-size:        {$font_size}px;
    background-color: {$bgcolor};
    {$shortcode_settings['advanced_style']}
 }
 .stock_ticker_{$id} .stock_ticker_slider {
-   width:  {$slider_width}px;
    height: {$height}px;
 }
 .stock_ticker_{$id} .stock_ticker_entry {
-   position: absolute;
-   width:    {$entry_width}px;
-   height:   {$height}px;
-   color:    ${text_color};
-}
+   position:      relative;
+   font-size:     {$font_size}px;
+   height:        {$height}px;
+   color:         {$text_color};
+   }
 .stock_ticker_{$id} .stock_ticker_element {
-   opacity:     {$shortcode_settings['text_opacity']};
-   font-size:   {$shortcode_settings['font_size']}px;
-   font-family: {$shortcode_settings['font_family']},serif;
-   width:       {$element_width}px;
-   height:      {$height}px;
-   line-height: {$height}px;
+   opacity:       {$shortcode_settings['text_opacity']};
+   font-size:     {$font_size}px;
+   font-family:   {$shortcode_settings['font_family']},serif;
+   height:        {$height}px;
+   line-height:   {$height}px;
 }
 .stock_ticker_{$id} .stock_ticker_triangle {
-   left: {$triangle_left_position}px;
-   top:  {$triangle_top_position}px;
+   left:          {$triangle_left_position}px;
+   top:           {$triangle_top_position}px;
 }
 .stock_ticker_{$id} .stock_ticker_triangle.st_red { /*face down */
-   border-left:  {$triangle_size}px solid transparent;
-   border-right: {$triangle_size}px solid transparent;
-   border-top:   {$triangle_size}px solid red;
+   border-left:   {$triangle_size}px solid transparent;
+   border-right:  {$triangle_size}px solid transparent;
+   border-top:    {$triangle_size}px solid red;
 }
 .stock_ticker_{$id} .stock_ticker_triangle.st_green { /*face up */
    border-left:   {$triangle_size}px solid transparent;
@@ -194,23 +173,15 @@ function stock_ticker_create_css_header($entry_width, $shortcode_settings, $num_
    border-bottom: {$triangle_size}px solid green;
 }
 .stock_ticker_{$id} .stock_ticker_vertical_line {
-   height:         {$vbar_height}px;
-   margin-bottom: -{$vbar_m_bottom}px;
+   line-height:   {$vbar_height}px;
+   color: {$bgcolor};
 }
 
 .stock_ticker_{$id} .ticker-wrapper {
-    width: {$double_slider_width}px;            /*The wrapper needs to be AT LEAST this wide to prevent wrapping. Wider is fine. */
+    width: 50000px;
+    /* Required! if not long enough, the second copy of the ticker will wrap to a second line */
+    /* All javascript width calculations will fail if this happens! NOTE: stock_ticker_script.js sets this to the correct value*/
 }
-
-.stock_ticker_{$id} .css3-ticker-scroll {
-    position:relative;
-    float:left;
-    /* width:auto;    This was here for a good reason at one point but I don't remember why, so commenting out for now */
-    -webkit-animation: marquee {$animation_time}s linear infinite;
-    -moz-animation: marquee {$animation_time}s linear infinite; 
-    animation: marquee {$animation_time}s linear infinite;      /*Assign the animation to the main ticker container*/
-}
-
 
 </style>
 HEREDOC;
@@ -218,22 +189,18 @@ HEREDOC;
 }
 
 /********** Creates the ticker html ***********/
-//function stock_ticker_create_ticker($id, $entry_width, $st_ds, $data_list, $scroll_speed) {
-function stock_ticker_create_ticker($entry_width, $shortcode_settings, $data_list) {
+function stock_ticker_create_ticker($shortcode_settings, $data_list) {
     
     $id = $shortcode_settings['id'];
-    
-    $left_position = 0;
     $stock_entries = '';
 
     foreach($data_list as $stock_data){ //throwing away the key, which in this case is stock symbol associated array
             if($stock_data['last_val']=="0.00"){
                     continue;
             }
-            $stock_entries .= "<div class='stock_ticker_entry' style='left: {$left_position}px;'><!-- \n -->";
+            $stock_entries .= "<div class='stock_ticker_entry'>";
             $stock_entries .= stock_ticker_create_entry($stock_data, $shortcode_settings); 
-            $stock_entries .= "</div><!-- \n -->";
-            $left_position += $entry_width;
+            $stock_entries .= "</div>";
     }
 
     $the_jquery =  stock_ticker_create_jquery($shortcode_settings);
@@ -256,7 +223,7 @@ STC;
 
 //NOTE: closest(div) may not be necessary
 function stock_ticker_create_jquery($shortcode_settings) {
-
+        // $json_settings = json_encode($shortcode_settings);
         return <<<JQC
         <script type="text/javascript">
               var tmp = document.getElementsByTagName( 'script' );
@@ -266,7 +233,7 @@ function stock_ticker_create_jquery($shortcode_settings) {
                     final_opacity: {$shortcode_settings['bg_opacity']},
                     scroll_speed:  {$shortcode_settings['scroll_speed']}
               };
-              stock_ticker_start_js(ticker_config);
+              stock_ticker_start(ticker_config);
         </script>
 JQC;
 }
@@ -298,10 +265,16 @@ function stock_ticker_create_entry($stock_data, $shortcode_settings) {
         if($display_data[1]==1){
                 $data_item = $stock_data['stock_sym'];
 
-                if      ($data_item == "^GSPC"){ //replace with more readable versions
-                         $data_item = "S&P500";
-                } elseif($data_item == "^IXIC"){
-                         $data_item = "NASDAQ";
+                switch ($data_item) { // replace 
+                    case "^GSPC":
+                        $data_item = "S&P500";
+                        break;
+                    case "^IXIC":
+                        $data_item = "NASDAQ";
+                        break;
+                    case "^NYA":
+                        $data_item = "NYSE";
+                        break;
                 }
                 $text_color = ($change_all) ? $color_class : '';  //NOTE: This carries through into #2
                 $output .= "<div class='stock_ticker_element {$text_color}'>{$data_item}</div><!-- \n -->";
@@ -333,7 +306,7 @@ function stock_ticker_create_entry($stock_data, $shortcode_settings) {
         }
         //creates the line after each entry.
         if($shortcode_settings['draw_vertical_lines'] == 1) {
-            $output .= "<div class='stock_ticker_vertical_line'></div><!-- \n -->";
+            $output .= "<div class='stock_ticker_vertical_line'>&nbsp;</div><!-- \n -->";
         }
         
         return $output;

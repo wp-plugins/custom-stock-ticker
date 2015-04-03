@@ -1,39 +1,36 @@
-//NOTE: only used if modernizer fails
-function slider_scroll(target, speed, current_entry, end_entry){
-        var entry = target.find('.stock_ticker_entry');
-        //entry width is used to move the entries as the slider slides beneath them
-        var entry_width = entry.first().width(); //NOTE: all entries are the same width, so just pick 1
-
-        if (! entry.eq(current_entry).length) { //jquery object -> get all entries -> get indexed entry, jquery always retuns a list
-                current_entry = 0; //if current entry goes out of bounds
-        }
-
-        var time = entry_width / (speed / 1000);
-        //animate does a specific set of css transformations over a set duration smoothly
-        target.animate({left : "-=" + entry_width}, time, 'linear',function(){ // move slider div  to the left
-                var new_offset = entry.eq(end_entry).position().left + entry_width;  //after animation complete, move the first child to be last child by left offset
-                entry.eq(current_entry).css({left :new_offset});
-                slider_scroll(target, speed, current_entry + 1, current_entry); //and issue a new animate command
-                //NOTE: the entries are cycling around, so first its 0 1 2 3, next its 1 2 3 0 then its 2 3 0 1 etc
-        });
+function slider_scroll(slider, ticker_width, time){ // this is the jQuery animation function
+    slider.css("left", "0px"); // reset offset of main ticker
+    //.animate({property: value}, duration, callback)
+    slider.animate({left: -ticker_width}, time, 'linear', // animate the slider to move to the left
+        function(){slider_scroll(slider, ticker_width, time)} // then callback to this function to start again
+    );
 }
 
-//Since tickers can be called multiple times per page, no sense checking the if conditions each time the function is invoked
-if ((Modernizr.cssanimations) && (Modernizr.csstransforms)) { // If animation & transforms are supported
-    var stock_ticker_start_js = function(config) {
-        config['ticker_root'].find('.ticker-main').addClass("css3-ticker-scroll"); // Then apply the class which starts the CSS3 animation
-        config['ticker_root'].find('.ticker-second').addClass("css3-ticker-scroll");
-        jQuery(config['ticker_root']).fadeTo(1000, config['final_opacity']);
-    };
-} else { // If animation & transforms are not supported
-    var stock_ticker_start_js = function(config) {
-        config['ticker_root'].find('.ticker-second').remove(); // remove the second ticker copy
-        var scroller = config['ticker_root'];
-        var slider   = scroller.find('.stock_ticker_slider');
-        var entry    = scroller.find('.stock_ticker_entry'); //saves a list of these elms
-        var last_entry = entry.length - 1;
+function set_wrapper_width(root) {
+    ticker_width=parseInt(root.find('.ticker-main').css('width')); // Get the computed width of the entire ticker
+    root.find('.ticker-wrapper').attr('style', "width:" + (ticker_width * 2 + 10) + "px"); // Set the width of the wrapper element to be twice the length of a ticker (so they both sit on one line)
+    return ticker_width;
+}
 
-        scroller.fadeTo(1000, config['final_opacity']);
-        slider_scroll(slider, config["scroll_speed"], 0, last_entry);
-    };
+var stock_ticker_start = function(config) {
+    var root = config['ticker_root']; //this will return the base element for the current ticker, e.g. [stock_ticker_4]
+    var slider = root.find('.stock_ticker_slider'); //get both sliders within that ticker
+    var entry  = root.find('.stock_ticker_entry'); //get one full list of stock entries
+    var maxLoop = 0;
+    while (parseInt(slider.css('width')) < parseInt(root.css('width')) && maxLoop < 40) {
+    //is the slider too short? (most be equal to or greather than ticker width)
+        slider = root.find('.stock_ticker_slider');
+        slider.append(entry.clone()); //slider too short, stick a copy of all the stock entries onto both sliders, then we'll check again
+        maxLoop++; // !IMPORTANT! this ensures that the while loop will not infinitely loop in the event something goes wrong somehow
+    }
+    var ticker_width = set_wrapper_width(root); // gets the width of 1 slider; also sets the width of the wrapper element
+    var time = Math.ceil(ticker_width / config['scroll_speed']); // Define the animation time in seconds
+    if ((Modernizr.cssanimations) && (Modernizr.csstransforms)) {
+    // Modernizr is an array created elsewhere, we are checking if these values are true or false. true = supported
+        slider.addClass("css3-ticker-scroll"); // add the class that has the css3 animation on it
+        slider.css("animation-duration", (time) + "s"); // set the total animation time based on computed width
+    } else { // if either animation or transforms are not supported, use jQuery animate
+        slider_scroll(slider, ticker_width, time/1000); // this function begins jQuery animate. Time is in miliseconds, so divide by 1000
+    }
+    root.fadeTo(1000, config['final_opacity']); // fade-in ticker
 }
