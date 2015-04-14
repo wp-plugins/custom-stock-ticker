@@ -30,7 +30,7 @@ var stock_ticker_start = function(config) {
         slider.addClass("css3-ticker-scroll"); // add the class that has the css3 animation on it
         slider.css("animation-duration", (time) + "s"); // set the total animation time based on computed width
     } else { // if either animation or transforms are not supported, use jQuery animate
-        slider_scroll(slider, ticker_width, time/1000); // this function begins jQuery animate. Time is in miliseconds, so divide by 1000
+        slider_scroll(slider, ticker_width, time*1000); // this function begins jQuery animate. Time is in miliseconds, so MULTIPLY by 1000
     }
     root.fadeTo(1000, config['final_opacity']); // fade-in ticker
 }
