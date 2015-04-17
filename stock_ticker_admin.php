@@ -4,7 +4,7 @@
     Plugin URI: http://relevad.com/wp-plugins/
     Description: Create customizable moving stock tickers that can be placed anywhere on a site using shortcodes.
     Author: Relevad
-    Version: 2.1
+    Version: 2.1a
     Author URI: http://relevad.com/
 
 */
