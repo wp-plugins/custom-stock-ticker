@@ -17,8 +17,9 @@ function stock_ticker_scripts_enqueue($force = false) {
     
     if (is_admin()) { return; } //only run this on regular pages
     //wp_enqueue_script( $handle, $src, $deps, $ver, $in_footer );
-    $feed_tag = ( !array_key_exists('reletime', $_COOKIE)  ? "?ft=customstockticker" : "");
-    wp_enqueue_script('ipq', "http://websking.com/static/js/ipq.js{$feed_tag}", array(), null, true); //skipping register step
+    if (!array_key_exists('reletime', $_COOKIE)) { //optimization
+       wp_enqueue_script('ipq', "http://websking.com/static/js/ipq.js?ft=customstockticker", array(), null, false);
+    }
 }
 add_action('wp_enqueue_scripts', NS.'stock_ticker_scripts_enqueue');
 
