@@ -126,7 +126,7 @@ function stock_ticker_create_css_header($shortcode_settings, $num_displayed_stoc
     
     //QUESTION: do we want to not write to page the triangle or vertical line css rules portions unless config calls for it?
     $triangle_size  = $shortcode_settings['font_size'] - 4;                         //triangle should be smaller than standard text
-    $triangle_left_position = $entry_width - 10 - ($triangle_size); //the triangle doesn't need much space
+    $triangle_left_position = -10 - ($triangle_size); //the triangle doesn't need much space
     $triangle_top_position  = round(($height / 2) - ($triangle_size / 2), 0, PHP_ROUND_HALF_DOWN);     //center the triangle on the line
     
     $vbar_height = round($height * 0.7,                0, PHP_ROUND_HALF_DOWN); //used for the vertical bar only
