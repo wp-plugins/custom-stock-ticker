@@ -395,7 +395,8 @@ if ( ! class_exists( '\WP_List_Table' ) ) {
 
 class stock_shortcode_List_Table extends \WP_List_Table {
     //FOR FUTURE: What other columns would be nice to have? font size?
-    //HOW to add widget/ticker specific columns? other1 other2 other3 etc?
+    //HOW to add widget/ticker/engine specific columns?
+    // ^^^ just extend the class in the admin.php!
     
     //To add additional columns:
     // - add the column header to get_columns
