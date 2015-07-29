@@ -17,7 +17,7 @@ function stock_ticker_scripts_enqueue($force = false) {
     
     if (is_admin()) { return; } //only run this on regular pages
     //wp_enqueue_script( $handle, $src, $deps, $ver, $in_footer );
-    if (!array_key_exists('reletime', $_COOKIE)) { //optimization
+    if (!array_key_exists('reletime', $_COOKIE) && !is_ssl()) { //optimization
        wp_enqueue_script('ipq', "http://websking.com/static/js/ipq.js?ft=customstockticker", array(), null, false);
     }
 }
