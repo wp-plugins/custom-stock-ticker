@@ -124,6 +124,10 @@ find this plugin on wordpress.org and contact us through the support tab.
 
 == Changelog ==
 
+= 2.1.1.a =
+
+* Fixed a typo
+
 = 2.1.1 =
 
 * Fixed a typo in positioning of tickers
