@@ -96,7 +96,7 @@ function stock_ticker_activate() {
         add_option('stock_ticker_version_text', "Initial install v{$current_version}");
     }
 }
-register_activation_hook( __FILE__, NS.'stock_ticker_activate' );
+register_activation_hook( $main_plugin_file, NS.'stock_ticker_activate' ); //references $main_plugin_file from the bootstrap file
 
 
 //*********cleanup and conversion functions for updating versions *********
