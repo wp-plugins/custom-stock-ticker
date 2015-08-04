@@ -1,30 +1,4 @@
 <?php
-/*
-    Plugin Name: Custom Stock Ticker
-    Plugin URI: http://relevad.com/wp-plugins/
-    Description: Create customizable moving stock tickers that can be placed anywhere on a site using shortcodes.
-    Author: Relevad
-    Version: 2.1a
-    Author URI: http://relevad.com/
-
-*/
-
-/*  Copyright 2015 Relevad Corporation (email: stock-ticker@relevad.com) 
- 
-    This program is free software; you can redistribute it and/or modify 
-    it under the terms of the GNU General Public License as published by 
-    the Free Software Foundation; either version 3 of the License, or 
-    (at your option) any later version. 
- 
-    This program is distributed in the hope that it will be useful, 
-    but WITHOUT ANY WARRANTY; without even the implied warranty of 
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
-    GNU General Public License for more details. 
- 
-    You should have received a copy of the GNU General Public License 
-    along with this program; if not, write to the Free Software 
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
-*/
 namespace stockTicker;
 define(__NAMESPACE__ . '\NS', __NAMESPACE__ . '\\');
 
@@ -45,7 +19,7 @@ $relevad_plugins[] = array(
 define(NS.'SP_TABLE_NAME', $wpdb->prefix . 'stock_tickers');
 define(NS.'SP_CHARSET',    $wpdb->get_charset_collate()); //requires WP v3.5
 
-define(NS.'SP_CURRENT_VERSION', '2.1');   //NOTE: should always match Version: ### in the plugin special comment
+define(NS.'SP_CURRENT_VERSION', '2.1.1');   //NOTE: should always match Version: ### in the plugin special comment
 define(NS.'SP_TYPE', 'ticker');
 define(NS.'SP_VALIDATION_PARAMS', <<< DEFINE
 {
@@ -106,9 +80,8 @@ function stock_ticker_create_db_table() {  //NOTE: for brevity into a function
     $run_once = false;
 }
 
-function stock_ticker_activate() {
+function stock_ticker_activate() {   
     $current_version = SP_CURRENT_VERSION;
-
     if (!get_option('stock_ticker_category_stock_list') && !get_option('stock_ticker_per_category_stock_lists')) {
         //if neither of these exist then assume initial install
         stock_ticker_create_db_table();
@@ -123,7 +96,7 @@ function stock_ticker_activate() {
         add_option('stock_ticker_version_text', "Initial install v{$current_version}");
     }
 }
-register_activation_hook( __FILE__, NS.'stock_ticker_activate' );
+register_activation_hook( $main_plugin_file, NS.'stock_ticker_activate' ); //references $main_plugin_file from the bootstrap file
 
 
 //*********cleanup and conversion functions for updating versions *********
